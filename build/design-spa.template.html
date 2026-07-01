@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>__TITLE__ · Skincare</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23__MARKBG_ENC__'/%3E%3Ccircle cx='50' cy='38' r='13' fill='none' stroke='%23__MARKFG_ENC__' stroke-width='3'/%3E%3Cline x1='50' y1='51' x2='50' y2='78' stroke='%23__MARKFG_ENC__' stroke-width='3' stroke-dasharray='2 6' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="__STATUSBAR__">
+<meta name="apple-mobile-web-app-title" content="__SHORT__">
+<meta name="theme-color" content="__THEMECOLOR__">
+<style>
+  :root{
+    /*__PALETTE__*/
+    --paper:#FBF6F2; --card:#FFFFFF; --blush:#F3E3DE; --line:#EAD9D2;
+    --plum:#5C3A4B; --plum-soft:#7E6A86; --rose:#C58A98; --ink:#3A2E33;
+    --muted:#9A8A8E; --clay:#B5715F; --clay-bg:#F6E6DF;
+    --ac-retinol:#8FA98E; --ac-repair:#C58A98; --ac-bha:#8FA3B8;
+    --ac-sleep:#7E6A86; --ac-calm:#94B0A8; --ac-session:#B5715F;
+    --btn-bg:var(--plum); --btn-fg:#fff;
+    --prompt-a:var(--plum); --prompt-b:var(--plum-soft); --prompt-fg:#fff;
+    --prompt-yes-bg:#fff; --prompt-yes-fg:var(--plum);
+    --prompt-no-bg:rgba(255,255,255,.16); --prompt-no-fg:#fff;
+    /*__END_PALETTE__*/
+    --serif:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --round:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+    --r:20px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;}
+  body{
+    font-family:var(--round); background:var(--paper); color:var(--ink);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    padding-bottom:calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 20px;}
+
+  /* header */
+  header{
+    padding:calc(14px + env(safe-area-inset-top)) 20px 12px;
+    display:flex;align-items:center;justify-content:space-between;
+    max-width:560px;margin:0 auto;
+  }
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand .mark{width:26px;height:26px;flex:0 0 auto;}
+  .brand b{font-family:var(--serif);font-weight:600;font-size:18px;color:var(--plum);letter-spacing:.2px;}
+  .gear{
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);color:var(--plum-soft);display:grid;place-items:center;
+  }
+  .gear svg{width:18px;height:18px;}
+
+  /* nav */
+  nav.seg{
+    display:flex;gap:4px;background:var(--blush);border-radius:999px;padding:4px;margin:6px 0 0;
+  }
+  .segwrap{position:sticky;top:0;z-index:20;background:var(--paper);padding:2px 0 8px;}
+  nav.seg button{
+    flex:1;border:none;background:none;font-family:var(--round);font-weight:600;
+    font-size:14px;color:var(--plum-soft);padding:9px 6px;border-radius:999px;
+    transition:.18s;
+  }
+  nav.seg button.on{background:var(--card);color:var(--plum);box-shadow:0 2px 8px rgba(92,58,75,.12);}
+
+  main{margin-top:18px;}
+  .view{display:none;animation:rise .35s ease;}
+  .view.on{display:block;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* hero */
+  .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+  .hero h1{
+    font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.08;
+    margin:6px 0 4px;color:var(--plum);letter-spacing:-.4px;
+  }
+  .hero .meta{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;}
+  .dayflag{display:inline-flex;align-items:center;gap:7px;}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--ac);display:inline-block;}
+  .microtag{
+    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--clay);background:var(--clay-bg);padding:3px 9px;border-radius:999px;
+  }
+
+  /* phase toggle */
+  .phase{display:flex;gap:4px;background:var(--blush);border-radius:999px;padding:4px;margin:16px 0 4px;width:fit-content;}
+  .phase button{
+    border:none;background:none;font-family:var(--round);font-weight:600;font-size:13px;
+    color:var(--plum-soft);padding:7px 18px;border-radius:999px;display:flex;align-items:center;gap:6px;
+  }
+  .phase button.on{background:var(--card);color:var(--plum);box-shadow:0 1px 5px rgba(92,58,75,.12);}
+
+  /* card */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:20px 20px 22px;margin:16px 0;box-shadow:0 6px 22px rgba(92,58,75,.05);
+  }
+  .note{
+    font-style:italic;color:var(--plum-soft);font-size:14px;line-height:1.5;
+    border-left:2px solid var(--rose);padding-left:12px;margin:0 0 14px;
+  }
+  .warn{
+    display:flex;gap:9px;align-items:flex-start;background:var(--clay-bg);color:var(--clay);
+    border-radius:14px;padding:11px 14px;font-size:13.5px;font-weight:600;margin:14px 0 0;line-height:1.45;
+  }
+  .warn svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px;}
+
+  /* ritual rail — the signature */
+  ol.rail{list-style:none;margin:4px 0 0;padding:0;position:relative;}
+  ol.rail li{position:relative;padding:0 0 18px 34px;font-size:15.5px;line-height:1.5;color:var(--ink);}
+  ol.rail li:last-child{padding-bottom:0;}
+  ol.rail li::before{ /* the thread */
+    content:"";position:absolute;left:9px;top:18px;bottom:-2px;width:2px;
+    background:repeating-linear-gradient(var(--line) 0 3px,transparent 3px 9px);
+  }
+  ol.rail li:last-child::before{display:none;}
+  ol.rail li::after{ /* the bead */
+    content:"";position:absolute;left:3px;top:4px;width:14px;height:14px;border-radius:50%;
+    background:var(--card);border:2px solid var(--rose);
+  }
+  ol.rail li.wait{font-family:var(--serif);font-style:italic;color:var(--plum);font-size:16px;}
+  ol.rail li.wait::after{background:var(--plum);border-color:var(--plum);}
+  ol.rail li .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--clay);margin-left:4px;}
+
+  .seclabel{
+    font-family:var(--serif);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--plum-soft);margin:22px 0 8px;display:flex;align-items:center;gap:10px;
+  }
+  .seclabel::after{content:"";flex:1;height:1px;background:var(--line);}
+  .sec:first-of-type .seclabel{margin-top:4px;}
+
+  /* week accordion */
+  .acc{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:11px 0;overflow:hidden;}
+  .acc>button{
+    width:100%;border:none;background:none;display:flex;align-items:center;gap:12px;
+    padding:16px 18px;text-align:left;font-family:var(--round);
+  }
+  .acc .wd{font-family:var(--serif);font-size:13px;color:var(--muted);width:38px;flex:0 0 auto;font-weight:600;}
+  .acc .th{flex:1;font-weight:600;font-size:16px;color:var(--plum);}
+  .acc .chev{color:var(--muted);transition:.2s;}
+  .acc.open .chev{transform:rotate(180deg);}
+  .acc .body{display:none;padding:0 18px 18px 18px;}
+  .acc.open .body{display:block;}
+  .acc.today{border-color:var(--rose);box-shadow:0 4px 16px rgba(197,138,152,.18);}
+  .acc.today .wd::after{content:" · today";color:var(--rose);}
+
+  .footnote{text-align:center;color:var(--muted);font-size:13px;font-style:italic;line-height:1.6;margin:22px 8px 8px;}
+  .devicebadge{
+    display:inline-flex;align-items:center;gap:8px;background:var(--blush);color:var(--plum);
+    font-size:12.5px;font-weight:600;border-radius:999px;padding:7px 14px;margin:4px 0 6px;
+  }
+
+  /* settings */
+  .field{margin:18px 0;}
+  .field label{display:block;font-size:13px;font-weight:700;color:var(--plum-soft);letter-spacing:.03em;text-transform:uppercase;margin-bottom:7px;}
+  .field input,.field select{
+    width:100%;font-family:var(--round);font-size:16px;padding:13px 14px;border-radius:14px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+  }
+  .field .help{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45;}
+  .btn{
+    width:100%;border:none;border-radius:14px;padding:15px;font-family:var(--round);font-weight:700;
+    font-size:16px;background:var(--btn-bg);color:var(--btn-fg);margin-top:6px;
+  }
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--clay);margin-top:12px;}
+  .cyclestat{background:var(--blush);border-radius:16px;padding:16px 18px;font-size:14.5px;color:var(--plum);line-height:1.5;}
+  .cyclestat b{font-family:var(--serif);}
+
+  /* microneedling prompt */
+  .prompt{
+    background:linear-gradient(135deg,var(--prompt-a),var(--prompt-b));color:var(--prompt-fg);border-radius:var(--r);
+    padding:18px 20px;margin:16px 0;box-shadow:0 8px 24px rgba(92,58,75,.22);
+  }
+  .prompt p{margin:0 0 4px;}
+  .prompt .ttl{font-family:var(--serif);font-size:19px;font-weight:600;}
+  .prompt .sub{font-size:13.5px;opacity:.85;margin-bottom:14px;}
+  .prompt .row{display:flex;gap:10px;}
+  .prompt .row button{flex:1;border:none;border-radius:12px;padding:12px;font-family:var(--round);font-weight:700;font-size:15px;}
+  .prompt .yes{background:var(--prompt-yes-bg);color:var(--prompt-yes-fg);}
+  .prompt .no{background:var(--prompt-no-bg);color:var(--prompt-no-fg);}
+
+  /* setup / first run */
+  .overlay{position:fixed;inset:0;background:rgba(58,46,51,.55);backdrop-filter:blur(4px);display:none;place-items:center;z-index:100;padding:20px;}
+  .overlay.on{display:grid;}
+  .sheet{background:var(--paper);border-radius:24px;padding:26px 24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .sheet h2{font-family:var(--serif);color:var(--plum);font-size:24px;margin:0 0 6px;}
+  .sheet p{color:var(--plum-soft);font-size:14px;margin:0 0 18px;line-height:1.5;}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+  /*__THEMECSS__*/
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#__MARKBG__"/><circle cx="50" cy="38" r="13" fill="none" stroke="#__MARKFG__" stroke-width="3"/><line x1="50" y1="51" x2="50" y2="78" stroke="#__MARKFG__" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/></svg>
+    <b>__BRAND__</b>
+  </div>
+  <button class="gear" id="gear" aria-label="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+</header>
+
+<div class="segwrap"><div class="wrap"><nav class="seg" id="nav">
+  <button data-v="today" class="on">Today</button>
+  <button data-v="week">The week</button>
+  <button data-v="micro">Needling</button>
+</nav></div></div>
+
+<main class="wrap">
+  <section class="view on" id="v-today"></section>
+  <section class="view" id="v-week"></section>
+  <section class="view" id="v-micro"></section>
+  <section class="view" id="v-settings"></section>
+</main>
+
+<div class="overlay" id="setup">
+  <div class="sheet">
+    <h2>Let's set your cycle</h2>
+    <p>When was your last microneedling session? I'll use it to predict the weeks ahead. You can change this anytime.</p>
+    <div class="field">
+      <label for="su-date">Last session date</label>
+      <input type="date" id="su-date">
+    </div>
+    <div class="field">
+      <label for="su-int">Repeat every</label>
+      <select id="su-int">
+        <option value="4">4 weeks</option>
+        <option value="5" selected>5 weeks</option>
+        <option value="6">6 weeks</option>
+      </select>
+      <div class="help">You confirm or skip each predicted week, so this is just the starting rhythm.</div>
+    </div>
+    <button class="btn" id="su-save">Start</button>
+    <button class="btn ghost" id="su-skip">I haven't started microneedling</button>
+  </div>
+</div>
+
+<script>
+/*__CORE__*/
+
+/* ===================== Quiet Ritual — render ===================== */
+const ACCENT = {retinol:"--ac-retinol",repair:"--ac-repair",bha:"--ac-bha",sleep:"--ac-sleep",calm:"--ac-calm",session:"--ac-session"};
+const WARN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+let now = new Date();
+let view = "today";
+let phaseOverride = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const accentVar = a => `var(${ACCENT[a]||"--ac-repair"})`;
+
+function stepsHTML(steps){
+  return '<ol class="rail">'+steps.map(s=>{
+    const wait = typeof s==="object"&&s.wait;
+    const text = typeof s==="string"?s:s.t;
+    return `<li class="${wait?"wait":""}">${esc(text)}</li>`;
+  }).join("")+'</ol>';
+}
+function warnsHTML(warns){
+  if(!warns||!warns.length) return "";
+  return warns.map(w=>`<div class="warn">${WARN_SVG}<span>${esc(w)}</span></div>`).join("");
+}
+function routineBodyHTML(day){
+  let h="";
+  if(day.note) h+=`<p class="note">${esc(day.note)}</p>`;
+  if(day.sections){
+    day.sections.forEach(sec=>{
+      h+=`<div class="sec"><div class="seclabel">${esc(sec.label)}</div>${stepsHTML(sec.steps)}${warnsHTML(sec.warns)}</div>`;
+    });
+  } else {
+    h+=stepsHTML(day.steps);
+  }
+  h+=warnsHTML(day.warns);
+  return h;
+}
+
+function fmtLong(d){return d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});}
+
+function renderToday(){
+  const c = computeCycle(now);
+  const dayKey = DAY_KEYS[now.getDay()];
+  const phase = phaseOverride || phaseNow(now);
+  const micro = c.configured && c.microActive;
+  const pmDay = routineFor(dayKey, micro);
+  const accent = phase==="am" ? "repair" : pmDay.accent;
+  const title = phase==="am" ? "Morning" : pmDay.theme;
+
+  let promptHTML="";
+  if(c.configured && c.needPrompt){
+    promptHTML=`<div class="prompt">
+      <p class="ttl">Microneedling week</p>
+      <p class="sub">This is a predicted session week. Are you doing it?</p>
+      <div class="row"><button class="yes" data-act="yes">Yes, this week</button><button class="no" data-act="no">Not this week</button></div>
+    </div>`;
+  }
+
+  // AM note only matters during recovery mornings
+  let amNote="";
+  if(phase==="am" && micro && pmDay.amNote) amNote=`<p class="note">${esc(pmDay.amNote)}</p>`;
+
+  const body = phase==="am"
+    ? amNote + stepsHTML(DATA.am.steps)
+    : routineBodyHTML(pmDay);
+
+  $("#v-today").innerHTML = `
+    ${promptHTML}
+    <div class="hero" style="--ac:${accentVar(accent)}">
+      <div class="eyebrow">${esc(fmtLong(now))}</div>
+      <h1>${esc(title)}</h1>
+      <div class="meta">
+        <span class="dayflag"><span class="dot"></span>${DAY_FULL[dayKey]}</span>
+        ${micro?'<span class="microtag">Needling week</span>':""}
+      </div>
+    </div>
+    <div class="phase" role="group" aria-label="Morning or evening">
+      <button data-p="am" class="${phase==="am"?"on":""}">☀︎ Morning</button>
+      <button data-p="pm" class="${phase==="pm"?"on":""}">☾ Evening</button>
+    </div>
+    <div class="card" style="--ac:${accentVar(accent)}">${body}</div>
+  `;
+}
+
+function renderWeek(){
+  const c = computeCycle(now);
+  const micro = c.configured && c.microActive;
+  const todayKey = DAY_KEYS[now.getDay()];
+  const order=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  let h=`<div class="hero"><div class="eyebrow">Evenings</div><h1>The week</h1>
+    <div class="meta">${micro?'<span class="microtag">Showing needling week</span>':"Your normal PM rotation"}</div></div>`;
+  h+=`<div style="margin-top:14px"></div>`;
+  order.forEach(k=>{
+    const d=routineFor(k,micro);
+    const isToday=k===todayKey;
+    h+=`<div class="acc ${isToday?"open today":""}" data-acc>
+      <button data-acctoggle><span class="wd">${k}</span><span class="th">${esc(d.theme)}</span>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
+      <div class="body">${routineBodyHTML(d)}</div>
+    </div>`;
+  });
+  $("#v-week").innerHTML=h;
+}
+
+function renderMicro(){
+  const order=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  let h=`<div class="hero"><div class="eyebrow">Every few weeks</div><h1>Needling week</h1></div>
+    <div class="devicebadge">✦ ${esc(DATA.meta.device)}</div>`;
+  order.forEach(k=>{
+    const d=DATA.micro[k];
+    h+=`<div class="card" style="--ac:${accentVar(d.accent)}">
+      <div class="seclabel" style="margin-top:0">${k} · ${esc(d.theme)}</div>
+      ${d.amNote?`<p class="note">AM — ${esc(d.amNote)}</p>`:""}
+      ${routineBodyHTML(d)}
+    </div>`;
+  });
+  h+=`<p class="footnote">${esc(DATA.micro.footer)}</p>`;
+  $("#v-micro").innerHTML=h;
+}
+
+function renderSettings(){
+  const c = computeCycle(now);
+  const st = loadState();
+  let stat;
+  if(!st){ stat=`Not set up yet.`; }
+  else {
+    const next=c.candidateFriday.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+    const when = c.microActive ? "This is a needling week." :
+      (c.weeksUntil<=0?"Predicted this week.":`About <b>${c.weeksUntil} week${c.weeksUntil===1?"":"s"}</b> away.`);
+    stat=`Next session predicted for <b>${next}</b>. ${when}`;
+  }
+  $("#v-settings").innerHTML=`
+    <div class="hero"><div class="eyebrow">Settings</div><h1>Your cycle</h1></div>
+    <div class="cyclestat" style="margin-top:14px">${stat}</div>
+    <div class="field"><label for="se-date">Last session date</label>
+      <input type="date" id="se-date" value="${st?st.lastSession:""}"></div>
+    <div class="field"><label for="se-int">Repeat every</label>
+      <select id="se-int">
+        <option value="4">4 weeks</option><option value="5">5 weeks</option><option value="6">6 weeks</option>
+      </select>
+      <div class="help">A new session you confirm becomes the next anchor automatically.</div></div>
+    <button class="btn" id="se-save">Save</button>
+    <button class="btn ghost" id="se-reset">Reset all cycle data</button>
+  `;
+  if(st) $("#se-int").value=String(st.interval);
+}
+
+function render(){
+  renderToday();
+  if(view==="week") renderWeek();
+  if(view==="micro") renderMicro();
+  if(view==="settings") renderSettings();
+}
+
+function setView(v){
+  view=v;
+  document.querySelectorAll(".view").forEach(el=>el.classList.remove("on"));
+  $("#v-"+v).classList.add("on");
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  if(v==="week") renderWeek();
+  if(v==="micro") renderMicro();
+  if(v==="settings") renderSettings();
+  window.scrollTo({top:0,behavior:"auto"});
+}
+
+/* events */
+$("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setView(b.dataset.v);});
+$("#gear").addEventListener("click",()=>setView("settings"));
+
+document.body.addEventListener("click",e=>{
+  const p=e.target.closest(".phase button");
+  if(p){phaseOverride=p.dataset.p;renderToday();return;}
+  const act=e.target.closest("[data-act]");
+  if(act){answerWeek(now,act.dataset.act==="yes");render();return;}
+  const tog=e.target.closest("[data-acctoggle]");
+  if(tog){tog.closest("[data-acc]").classList.toggle("open");return;}
+});
+
+/* setup */
+function openSetup(){
+  $("#su-date").value="";
+  $("#setup").classList.add("on");
+}
+$("#su-save").addEventListener("click",()=>{
+  const v=$("#su-date").value; if(!v){$("#su-date").focus();return;}
+  setupCycle(fromIso(v), parseInt($("#su-int").value,10));
+  $("#setup").classList.remove("on"); render();
+});
+$("#su-skip").addEventListener("click",()=>{
+  // seed an anchor far in the future-neutral past so no week is ever flagged until they set it.
+  saveState({lastSession:iso(fridayOf(new Date())),interval:99,answers:{}});
+  $("#setup").classList.remove("on"); render();
+});
+
+/* settings save/reset (delegated since rerendered) */
+document.body.addEventListener("click",e=>{
+  if(e.target.id==="se-save"){
+    const v=$("#se-date").value; if(!v)return;
+    const st=loadState()||{answers:{}};
+    st.lastSession=iso(fridayOf(fromIso(v)));
+    st.interval=parseInt($("#se-int").value,10);
+    st.answers=st.answers||{};
+    saveState(st); renderSettings(); renderToday();
+  }
+  if(e.target.id==="se-reset"){
+    localStorage.removeItem(STORE_KEY); openSetup(); renderSettings();
+  }
+});
+
+/* boot */
+if(!loadState()) openSetup();
+render();
+</script>
+</body>
+</html>
