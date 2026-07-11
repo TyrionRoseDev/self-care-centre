@@ -5,16 +5,18 @@ fire even when the app is closed. That is impossible from a purely static file �
 something running to send on schedule. The owner hosts on a **VPS with Coolify** (can run
 always-on Docker services and cron), which makes real Web Push viable.
 
-**Decision:** Build Web Push into v1. The static frontend gains a **service worker**; a
-small **companion push service** deployed as a separate Coolify app stores the push
-subscription (VAPID keys) and runs a scheduler that sends notifications at the configured
-times (weekday Sessions ~18:30, Sunday Session, skincare AM/PM). Rejected the phased
-alternative (calendar-reminder `.ics` in v1, push later) — the owner wants proper native
-push now and already has the backend-capable infra, so there's no reason to ship a
-stopgap.
+**Decision:** Build Web Push into v1. The frontend gains a **service worker**, and the
+app is served by a **single Node server** (`server.js`) that also exposes the push API
+(`/api/subscribe` etc.) and runs the cron schedule (workouts Tue/Thu 19:00 & Sun 17:00,
+skincare AM/PM, protein). The owner explicitly wanted **one deployment, not two**, so the
+push backend is folded into the app's own server rather than a separate companion service
+— same origin, so no CORS and nothing extra to host. Rejected: (a) the phased
+calendar-`.ics` stopgap, and (b) a standalone companion push service (the first cut),
+which was a second Coolify resource for no benefit once the app is already a server.
 
-**Consequences:** This introduces the app's **first backend component**, amending
-ADR-0001's "emits one static file": the *frontend* is still one static file, but the
-system now also includes a service worker and a companion push service. On iOS, push only
-works once the app is added to the home screen (iOS 16.4+) — the existing PWA
-manifest/icons already cover the install requirement.
+**Consequences:** The app is no longer a purely static file — it's a Node/Express server
+(Dockerfile build on Coolify) that serves the built `index.html` + `sw.js` and sends
+pushes. `PUSH_CONFIG.apiBase` stays empty (same origin); `vapidPublicKey` must match the
+server's `VAPID_PUBLIC`. Subscriptions persist on a `/data` volume. On iOS, push only
+works once the app is added to the Home Screen (iOS 16.4+) — the existing PWA
+manifest/icons already cover that. See DEPLOY.md.

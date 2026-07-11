@@ -12,13 +12,14 @@
 
 /* ----------------------------------------------------------------------------
    PUSH NOTIFICATIONS CONFIG
-   After you deploy the push-service to Coolify, paste its public URL and the
-   VAPID public key it prints on first run. Leave blank to disable notifications
-   (the app still works fully — reminders just won't fire). See push-service/README.
+   Single deployment: the app and its reminder API share one origin, so apiBase
+   stays empty (the app calls /api/... on itself). vapidPublicKey must match the
+   VAPID_PUBLIC env var on the server. Blank key = notifications disabled; the
+   app still works fully. See DEPLOY.md.
 ---------------------------------------------------------------------------- */
 const PUSH_CONFIG = {
-  apiBase: "",          // e.g. "https://ritual-push.yourdomain.com"
-  vapidPublicKey: "",   // the long base64 key from the push-service
+  apiBase: "",  // same origin — leave empty
+  vapidPublicKey: "BJYyAdG3OKRiLaYeipIC5ApGySMuzFz8u-shTdwh06F6tjG9tRZWhXo8eLmdhurPo02RMffwlWLupOaGjTXd2Vk",
 };
 
 const DATA = {

@@ -633,11 +633,11 @@ async function registerSW(){
   try { return await navigator.serviceWorker.register("sw.js"); }
   catch(e){ return null; }
 }
-function pushConfigured(){ return !!(PUSH_CONFIG.apiBase && PUSH_CONFIG.vapidPublicKey); }
+function pushConfigured(){ return !!PUSH_CONFIG.vapidPublicKey; }
 async function enablePush(){
   const card = $("#notif-card"); if(!card) return;
   if(!pushSupported()){ card.textContent = "This device can't do notifications here yet. On iPhone: Share → Add to Home Screen, then reopen the app from your Home Screen."; return; }
-  if(!pushConfigured()){ card.textContent = "Reminders aren't connected yet — deploy the push-service and paste its URL + key into PUSH_CONFIG (build/core.js), then rebuild."; return; }
+  if(!pushConfigured()){ card.textContent = "Reminders aren't switched on yet — the server needs its VAPID keys set (see DEPLOY.md)."; return; }
   card.textContent = "Asking for permission…";
   let perm;
   try { perm = await Notification.requestPermission(); } catch(e){ perm = "denied"; }
@@ -650,7 +650,7 @@ async function enablePush(){
       userVisibleOnly: true,
       applicationServerKey: urlB64ToUint8Array(PUSH_CONFIG.vapidPublicKey),
     });
-    const res = await fetch(PUSH_CONFIG.apiBase.replace(/\/$/,"") + "/subscribe", {
+    const res = await fetch((PUSH_CONFIG.apiBase || "").replace(/\/$/,"") + "/api/subscribe", {
       method: "POST", headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ subscription: sub, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }),
     });
