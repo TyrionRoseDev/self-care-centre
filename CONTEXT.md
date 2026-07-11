@@ -57,6 +57,13 @@ shake — no food changes). The whole block, not each Move or step. The Protein 
 bonus and never blocks a Streak on its own.
 _Avoid_: Check-off, log entry
 
+**Check-in**:
+The once-nightly, always-optional capture of the day's body signals — Steps, Sleep,
+and an optional Feel score (1–5, how the day felt in the body). A bonus like the
+Protein tick: checking in can earn Achievements, but a missed Check-in or a low-step
+day never breaks a Streak — the numbers are information, not judgement.
+_Avoid_: Log, journal, entry, diary
+
 **Tracker**:
 The view that turns Completions into feedback — current Streak, weekly consistency, and
 earned Achievements.

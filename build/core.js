@@ -649,8 +649,82 @@ function countPerfectDays() {
   return n;
 }
 
+/* ============================================================================
+   CHECK-INS (nightly Steps / Sleep / Feel)
+   ----------------------------------------------------------------------------
+   Offline-first: entries live in a local cache and work with no server at all.
+   With a CHECKIN_TOKEN pasted in Settings they also sync to /api/checkin, the
+   same endpoint an Apple Shortcut / Health Auto Export bridge will POST to
+   later (docs/adr/0003). Always optional — never part of a streak.
+   ============================================================================ */
+const CHECKIN_TOKEN_KEY = "ritual.checkin.token";
+const CHECKIN_CACHE_KEY = "ritual.checkins.v1";
+/* Gentle references only — a hint and a sparkle, never a red state. */
+const CHECKIN_GENTLE = {
+  stepsRef: "most days: ~7k",
+  sleepRef: "aim: 7–9h",
+  stepsInRange: s => s >= 6000,
+  sleepInRange: h => h >= 7 && h <= 9.5,
+};
+
+function checkinToken() { return localStorage.getItem(CHECKIN_TOKEN_KEY) || ""; }
+function setCheckinToken(t) {
+  if (t) localStorage.setItem(CHECKIN_TOKEN_KEY, t.trim());
+  else localStorage.removeItem(CHECKIN_TOKEN_KEY);
+}
+function loadCheckinCache() {
+  try { return JSON.parse(localStorage.getItem(CHECKIN_CACHE_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function saveCheckinCache(all) { localStorage.setItem(CHECKIN_CACHE_KEY, JSON.stringify(all)); }
+function getCheckin(dateIso) { return loadCheckinCache()[dateIso] || null; }
+
+/* Save locally first (always works), then best-effort sync to the server. */
+async function saveCheckin(dateIso, fields) {
+  const all = loadCheckinCache();
+  all[dateIso] = { ...(all[dateIso] || {}), ...fields };
+  saveCheckinCache(all);
+  if (!checkinToken()) return { ok: true, synced: false };
+  try {
+    const res = await fetch((PUSH_CONFIG.apiBase || "").replace(/\/$/, "") + "/api/checkin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Checkin-Token": checkinToken() },
+      body: JSON.stringify({ date: dateIso, ...fields }),
+    });
+    return { ok: true, synced: res.ok };
+  } catch (e) { return { ok: true, synced: false }; }
+}
+/* Pull the server's copy into the cache (server wins per date). */
+async function refreshCheckins(days = 60) {
+  if (!checkinToken()) return false;
+  try {
+    const res = await fetch((PUSH_CONFIG.apiBase || "").replace(/\/$/, "") + "/api/checkins?days=" + days, {
+      headers: { "X-Checkin-Token": checkinToken() },
+    });
+    if (!res.ok) return false;
+    const j = await res.json();
+    const all = loadCheckinCache();
+    for (const k in (j.checkins || {})) all[k] = { ...(all[k] || {}), ...j.checkins[k] };
+    saveCheckinCache(all);
+    return true;
+  } catch (e) { return false; }
+}
+
+function countCheckins() { return Object.keys(loadCheckinCache()).length; }
+function longestCheckinRun() {
+  const keys = Object.keys(loadCheckinCache()).sort();
+  if (!keys.length) return 0;
+  let best = 1, run = 1;
+  for (let i = 1; i < keys.length; i++) {
+    if (fromIso(keys[i]) - fromIso(keys[i - 1]) === 86400000) { run++; best = Math.max(best, run); }
+    else run = 1;
+  }
+  return best;
+}
+
 function trackerStats(now) {
   return {
+    checkins: countCheckins(),
     streak: currentStreak(now),
     longest: longestStreak(),
     workouts: countBlock("workout"),
@@ -708,6 +782,8 @@ function achievements(now) {
     A("move30",  "Mover",               "30 days of movement",             "extra",    s.move, 30),
     A("sleep7",  "Well rested",         "7 good nights' sleep",            "extra",    s.sleep, 7),
     A("sleep30", "Rested habit",        "30 good nights' sleep",           "extra",    s.sleep, 30),
+    A("chk1",    "First Check-in",      "Save your first nightly Check-in","extra",    s.checkins, 1),
+    A("chk7",    "A week of Check-ins", "7 nights checked in, in a row",   "extra",    longestCheckinRun(), 7),
 
     A("perfect1","First perfect day",   "Tick everything in one day",      "milestone",s.perfect, 1),
     A("perfect7","Perfect week",        "7 perfect days",                  "milestone",s.perfect, 7),
