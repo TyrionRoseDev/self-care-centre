@@ -1,4 +1,6 @@
 node_modules
 data
+.git
+push-service
 npm-debug.log
-.env
+*.log
