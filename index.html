@@ -3,16 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Self-care Centre · Skincare</title>
+<title>Quiet Ritual · Ritual</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23332751'/%3E%3Ccircle cx='50' cy='38' r='13' fill='none' stroke='%23DDCFEE' stroke-width='3'/%3E%3Cline x1='50' y1='51' x2='50' y2='78' stroke='%23DDCFEE' stroke-width='3' stroke-dasharray='2 6' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Self-care Centre">
+<meta name="apple-mobile-web-app-title" content="Ritual">
 <meta name="theme-color" content="#DCCFEE">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
-<link rel="shortcut icon" href="/favicon.ico">
 <style>
   :root{
     /*__PALETTE__*/
@@ -59,7 +55,7 @@
   .segwrap{position:sticky;top:0;z-index:20;background:var(--paper);padding:2px 0 8px;}
   nav.seg button{
     flex:1;border:none;background:none;font-family:var(--round);font-weight:600;
-    font-size:14px;color:var(--plum-soft);padding:9px 6px;border-radius:999px;
+    font-size:13.5px;color:var(--plum-soft);padding:9px 4px;border-radius:999px;
     transition:.18s;
   }
   nav.seg button.on{background:var(--card);color:var(--plum);box-shadow:0 2px 8px rgba(92,58,75,.12);}
@@ -75,7 +71,7 @@
     font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.08;
     margin:6px 0 4px;color:var(--plum);letter-spacing:-.4px;
   }
-  .hero .meta{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;}
+  .hero .meta{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;flex-wrap:wrap;}
   .dayflag{display:inline-flex;align-items:center;gap:7px;}
   .dot{width:9px;height:9px;border-radius:50%;background:var(--ac);display:inline-block;}
   .microtag{
@@ -134,11 +130,13 @@
   .acc{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:11px 0;overflow:hidden;}
   .acc>button{
     width:100%;border:none;background:none;display:flex;align-items:center;gap:12px;
-    padding:16px 18px;text-align:left;font-family:var(--round);
+    padding:16px 18px;text-align:left;font-family:var(--round);cursor:pointer;
   }
   .acc .wd{font-family:var(--serif);font-size:13px;color:var(--muted);width:38px;flex:0 0 auto;font-weight:600;}
   .acc .th{flex:1;font-weight:600;font-size:16px;color:var(--plum);}
-  .acc .chev{color:var(--muted);transition:.2s;}
+  .acc .dose{font-family:var(--serif);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;flex:0 0 auto;}
+  .acc .chev{color:var(--muted);transition:.2s;flex:0 0 auto;}
+  .acc .chev svg{display:block;width:18px;height:18px;}
   .acc.open .chev{transform:rotate(180deg);}
   .acc .body{display:none;padding:0 18px 18px 18px;}
   .acc.open .body{display:block;}
@@ -187,6 +185,80 @@
   .sheet h2{font-family:var(--serif);color:var(--plum);font-size:24px;margin:0 0 6px;}
   .sheet p{color:var(--plum-soft);font-size:14px;margin:0 0 18px;line-height:1.5;}
 
+  /* ---- hub additions ---- */
+  .subseg{display:flex;gap:4px;background:var(--blush);border-radius:999px;padding:4px;margin:14px 0 4px;width:fit-content;max-width:100%;}
+  .subseg button{border:none;background:none;font-family:var(--round);font-weight:600;font-size:13px;color:var(--plum-soft);padding:8px 16px;border-radius:999px;}
+  .subseg button.on{background:var(--card);color:var(--plum);box-shadow:0 1px 5px rgba(92,58,75,.12);}
+
+  /* today blocks (the daily checklist) */
+  .block{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:12px 0;overflow:hidden;box-shadow:0 6px 20px rgba(92,58,75,.05);}
+  .block.done{opacity:.72;}
+  .bhead{display:flex;align-items:center;gap:12px;padding:14px 15px;cursor:pointer;}
+  .bicon{width:32px;height:32px;border-radius:50%;background:var(--blush);display:grid;place-items:center;font-size:15px;flex:0 0 auto;}
+  .btitle{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .btitle b{font-weight:600;font-size:15.5px;color:var(--plum);}
+  .btitle small{font-size:12.5px;color:var(--muted);}
+  .block.done .btitle b{text-decoration:line-through;text-decoration-color:var(--muted);}
+  .bcheck{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);color:transparent;display:grid;place-items:center;flex:0 0 auto;font-size:15px;font-weight:800;background:var(--card);transition:.15s;}
+  .bcheck.on{background:var(--btn-bg);border-color:var(--btn-bg);color:var(--btn-fg);}
+  .block .chev{color:var(--muted);transition:.2s;flex:0 0 auto;}
+  .block .chev svg{display:block;width:18px;height:18px;}
+  .block.open .chev{transform:rotate(180deg);}
+  .bbody{display:none;padding:2px 16px 16px;}
+  .block.open .bbody{display:block;}
+
+  .movelist{list-style:none;margin:6px 0 0;padding:0;}
+  .movelist li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--ink);}
+  .movelist li:last-child{border-bottom:none;}
+  .movelist .d{color:var(--muted);font-family:var(--serif);font-size:13px;white-space:nowrap;}
+  .linkbtn{margin-top:12px;width:100%;border:none;border-radius:12px;padding:12px;font-family:var(--round);font-weight:700;font-size:14.5px;background:var(--blush);color:var(--plum);cursor:pointer;}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--blush);color:var(--plum);font-size:13px;font-weight:700;border-radius:999px;padding:5px 12px;}
+  .restnote{color:var(--muted);font-size:14px;}
+
+  /* tracker */
+  .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 16px;}
+  .stat .n{font-family:var(--serif);font-size:30px;font-weight:600;color:var(--plum);line-height:1;font-variant-numeric:tabular-nums;}
+  .stat .k{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:6px;}
+  .stat.big{grid-column:1/-1;background:linear-gradient(135deg,var(--prompt-a),var(--prompt-b));border:none;color:#fff;box-shadow:0 8px 24px rgba(92,58,75,.20);}
+  .stat.big .n{color:#fff;font-size:40px;}
+  .stat.big .k{color:#fff;opacity:.85;}
+  .gridcal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:8px 0 2px;}
+  .gridcal .cell{aspect-ratio:1;border-radius:8px;background:var(--blush);display:grid;place-items:center;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .gridcal .cell.partial{background:var(--rose);color:#fff;opacity:.6;}
+  .gridcal .cell.full{background:var(--btn-bg);color:#fff;opacity:1;}
+  .gridcal .cell.today{outline:2px solid var(--clay);outline-offset:1px;}
+  .badges{display:flex;flex-direction:column;gap:9px;margin-top:6px;}
+  .badge{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;}
+  .badge .ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:var(--blush);color:var(--muted);font-size:16px;}
+  .badge.earned .ic{background:var(--btn-bg);color:#fff;}
+  .badge .bt{flex:1;}
+  .badge .bt b{font-weight:600;font-size:15px;color:var(--plum);}
+  .badge .bt small{display:block;font-size:12.5px;color:var(--muted);}
+  .badge.locked{opacity:.72;}
+  .badge .bt small.done{color:var(--clay);font-weight:700;}
+  .badge .bar{height:5px;border-radius:999px;background:var(--blush);margin-top:8px;overflow:hidden;}
+  .badge .bar i{display:block;height:100%;background:var(--rose);border-radius:999px;transition:width .4s ease;}
+  .grouphead{font-family:var(--serif);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--plum-soft);margin:22px 0 8px;display:flex;align-items:center;gap:10px;}
+  .grouphead .cnt{font-family:var(--round);font-size:12px;color:var(--muted);font-weight:700;}
+  .grouphead::after{content:"";flex:1;height:1px;background:var(--line);order:1;}
+
+  .goals{background:linear-gradient(135deg,var(--prompt-a),var(--prompt-b));color:#fff;border-radius:var(--r);padding:18px 20px;margin:16px 0 2px;box-shadow:0 8px 24px rgba(92,58,75,.20);}
+  .goals h3{font-family:var(--serif);font-weight:600;font-size:17px;margin:0 0 10px;}
+  .goals ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .goals li{display:flex;gap:10px;align-items:baseline;font-size:14.5px;line-height:1.4;}
+  .goals li .rank{font-family:var(--serif);font-weight:600;opacity:.8;flex:0 0 auto;}
+  .goals .mantra{margin:12px 0 0;font-size:13px;opacity:.9;font-style:italic;}
+
+  .extras{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px;margin:14px 0;box-shadow:0 6px 20px rgba(92,58,75,.05);}
+  .extras .lab{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chiptog{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 13px;font-family:var(--round);font-size:13.5px;font-weight:600;color:var(--plum-soft);cursor:pointer;user-select:none;}
+  .chiptog .tick{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:9px;color:transparent;font-weight:800;}
+  .chiptog.on{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg);}
+  .chiptog.on .tick{border-color:var(--btn-fg);color:var(--btn-fg);}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
   
     /* Twilight — deeper dusk; card lifts off a saturated lilac-grey field */
@@ -230,14 +302,16 @@
 
 <div class="segwrap"><div class="wrap"><nav class="seg" id="nav">
   <button data-v="today" class="on">Today</button>
-  <button data-v="week">The week</button>
-  <button data-v="micro">Needling</button>
+  <button data-v="skincare">Skincare</button>
+  <button data-v="workout">Workout</button>
+  <button data-v="progress">Progress</button>
 </nav></div></div>
 
 <main class="wrap">
   <section class="view on" id="v-today"></section>
-  <section class="view" id="v-week"></section>
-  <section class="view" id="v-micro"></section>
+  <section class="view" id="v-skincare"></section>
+  <section class="view" id="v-workout"></section>
+  <section class="view" id="v-progress"></section>
   <section class="view" id="v-settings"></section>
 </main>
 
@@ -275,6 +349,17 @@
    warns:[...] (things NOT to do), and either steps:[...] or
    sections:[{label, steps}] for the microneedling session itself.
    ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   PUSH NOTIFICATIONS CONFIG
+   After you deploy the push-service to Coolify, paste its public URL and the
+   VAPID public key it prints on first run. Leave blank to disable notifications
+   (the app still works fully — reminders just won't fire). See push-service/README.
+---------------------------------------------------------------------------- */
+const PUSH_CONFIG = {
+  apiBase: "",          // e.g. "https://ritual-push.yourdomain.com"
+  vapidPublicKey: "",   // the long base64 key from the push-service
+};
 
 const DATA = {
   meta: {
@@ -637,17 +722,345 @@ function routineFor(dayKey, microActive) {
 /* AM/PM by clock: morning before 12:00, else evening. */
 function phaseNow(now) { return now.getHours() < 12 ? "am" : "pm"; }
 
+/* ============================================================================
+   WORKOUT ROUTINE — data + schedule
+   ----------------------------------------------------------------------------
+   Home, no gym, hEDS-friendly. Three Sessions a week (Tue / Thu / Sun) plus a
+   shared Warm-up. Every Move is written for someone who has never exercised:
+   { name, focus, what, setup:[...], do:[...], cue, heds, swap }.
+   A Session lists moves as [moveId, dose]. WORKOUT.schedule maps a weekday key
+   to a Session; days not in it are Rest days.
+   ============================================================================ */
+const WORKOUT = {
+  schedule: { Tue: "tue", Thu: "thu", Sun: "sun" },
+  groups: { warm: "Warm-up", core: "Core · stomach", glute: "Glutes · bum", arm: "Arms" },
 
-/* ===================== Quiet Ritual — render ===================== */
+  moves: {
+    marches: { name: "Marching on the Spot", focus: "warm",
+      what: "Gentle marching to warm your body up — feet stay low, no jumping.",
+      setup: ["Stand tall behind your chair, one hand resting on it for balance.", "Feet hip-width apart, shoulders relaxed."],
+      do: ["Lift one knee to a comfortable height, then set it down.", "Lift the other, in a slow steady rhythm — like walking on the spot.", "Keep going for about a minute."],
+      cue: "Breathe normally and steadily. It should feel easy, just warm.",
+      heds: "Hold the chair the whole time so your ankles and knees never have to balance you.",
+      swap: "If standing tires you, march sitting in the chair, lifting one knee at a time." },
+    catcow: { name: "Cat–Cow", focus: "warm",
+      what: "A slow, gentle rounding and arching of your back to loosen your spine.",
+      setup: ["Come onto all fours: hands under shoulders, knees under hips.", "Cushion under your knees if they feel tender.", "Start with a flat, table-top back."],
+      do: ["Slowly round your back up toward the ceiling, letting your head drop gently — like a cat stretching.", "Then reverse: let your tummy sink, lift your chest, look slightly forward — a soft arch.", "Move slowly between the two, 8 times."],
+      cue: "Breathe out as you round up, in as you arch down. A comfortable roll, never a strain.",
+      heds: "Only move as far as feels easy. With bendy joints, small and smooth beats big.",
+      swap: "If all-fours bothers your wrists or knees, sit in the chair and round then arch your back the same way." },
+    kneepushouts: { name: "Seated Banded Knee Push-Outs", focus: "warm",
+      what: "A gentle way to switch your bum muscles on before you use them.",
+      setup: ["Loop a booty band around both legs, just above your knees.", "Sit on the front edge of your chair, feet flat, knees bent hip-width apart."],
+      do: ["Slowly push both knees outward against the band, as far as is comfortable.", "Hold for 1 second — feel the sides of your bum working.", "Slowly bring them back in, controlling the band. 15 times."],
+      cue: "Breathe out as you push, in as you return. You'll feel the sides of your bum switch on.",
+      heds: "You're fully supported here with no balancing, so this is a nice safe one.",
+      swap: "No band yet? Press your hands against the outsides of your knees and push your knees into your hands." },
+    armcircles: { name: "Arm Circles", focus: "warm",
+      what: "Small, slow circles to warm up your shoulders.",
+      setup: ["Sit or stand tall, arms out to your sides at shoulder height (a T shape).", "If standing tires you, sit in the chair."],
+      do: ["Make small, slow forward circles — about the size of a dinner plate — for 10.", "Reverse and circle backward for 10.", "Keep them small and controlled."],
+      cue: "Breathe normally. Shoulders should feel warm and loose, never pinched.",
+      heds: "Keep circles small — a loose shoulder wanders too far on big circles.",
+      swap: "If holding your arms up tires them, keep the arms only slightly raised and circle gently." },
+
+    deadbug: { name: "Dead Bug", focus: "core",
+      what: "Lying on your back, lowering an opposite arm and leg while keeping your tummy tight. The best safe core move for you — no neck strain, no crunching.",
+      setup: ["Lie on your back. Lift both arms straight up, over your shoulders.", "Lift both legs so knees bend at a right angle, shins parallel to the floor (this is 'tabletop').", "Press your lower back flat into the mat and keep it there the whole time — this is the key."],
+      do: ["Slowly lower your right arm back over your head and straighten your left leg toward the floor together (opposite arm, opposite leg).", "Only go as far as you can while your lower back stays flat. The moment it arches, that's your limit.", "Slowly return, then do the other side. That's 1 rep."],
+      cue: "Breathe out slowly as you lower, in as you return. You'll feel a deep, low tension across your stomach — that tension is the exercise.",
+      heds: "Slow and small beats big and floppy. Control is everything for you.",
+      swap: "Too hard? Keep your legs still in tabletop and only move your arms. Add the legs later." },
+    birddog: { name: "Bird-Dog", focus: "core",
+      what: "On all fours, reaching one arm and the opposite leg out straight — a gentle whole-core and balance move.",
+      setup: ["On all fours: hands under shoulders, knees under hips, cushion under knees if needed.", "Flatten your back to a table-top and tighten your tummy."],
+      do: ["Slowly reach your right arm straight forward and your left leg straight back together.", "Reach them long, no higher than your body — don't let your back arch or hips tip.", "Hold 2 seconds, hips level. Slowly return, then do the other side. That's 1 rep."],
+      cue: "Breathe out as you reach, in as you return. You'll feel your tummy and bum working to keep you level; a little wobble is normal.",
+      heds: "Keep the reach at body height, not higher — a bendy back wants to over-arch.",
+      swap: "Too wobbly? Reach just the leg back (no arm), or just the arm forward, until your balance builds." },
+    pallof: { name: "Banded Pallof Hold", focus: "core",
+      what: "Holding a band that pulls you sideways and refusing to twist — quietly one of the best core moves there is.",
+      setup: ["Anchor a band at chest height to something solid — a door handle or a heavy sofa leg.", "Stand side-on to it, feet hip-width apart, holding the band at your chest with both hands.", "Step away until the band is taut."],
+      do: ["Press the band straight out in front of your chest with both hands.", "The band will try to twist you toward the anchor — don't let it. Keep your chest facing forward.", "Hold 20 seconds, square and still. Then turn to face the other way and repeat."],
+      cue: "Breathe slowly and normally — don't hold your breath while you brace. You'll feel the sides of your stomach working to stop you twisting.",
+      heds: "Feet planted, knees soft (not locked). All the work is your core holding steady.",
+      swap: "No anchor point? Loop the band under one foot and press it across your body, or just do an extra Dead Bug set." },
+    sideplank: { name: "Side Plank (from knees)", focus: "core",
+      what: "A supported side hold for the sides of your waist — done from your knees so it stays gentle.",
+      setup: ["Lie on your side. Prop up on your forearm, elbow directly under your shoulder.", "Bend your knees so your lower legs rest behind you — you'll balance on forearm and knees, not feet."],
+      do: ["Lift your hips off the floor so your body is a straight line from head to knees.", "Hold, keeping your hips up and body long, for 15–20 seconds.", "Lower gently, then roll over and do the other side."],
+      cue: "Breathe steadily throughout — don't hold your breath. You'll feel the side of your waist nearest the floor holding you up.",
+      heds: "Gently draw your supporting shoulder down away from your ear; don't sink into it. Elbow under shoulder, never locked.",
+      swap: "Too much? Hold the lift for just 5 seconds at a time. (You're on your forearm here, so wrists stay safe.)" },
+    heeltaps: { name: "Heel Taps", focus: "core",
+      what: "Lying on your back, lowering one leg at a time to lightly tap the floor — a gentle lower-tummy move.",
+      setup: ["Lie on your back, arms by your sides, palms down.", "Lift both legs into tabletop (knees bent at a right angle, shins parallel to floor).", "Press your lower back flat into the mat."],
+      do: ["Slowly lower one foot to lightly tap your heel on the floor, keeping the knee bent.", "Keep your lower back flat — if it arches, tap lighter and higher.", "Return to tabletop, then tap with the other foot. That's 1 rep."],
+      cue: "Breathe out as you lower, in as you return. You'll feel your lower tummy working to keep your back flat.",
+      heds: "Keep it small and slow. The moment your back lifts off the mat, you've gone too far.",
+      swap: "Too hard? Lower the foot only halfway toward the floor, not all the way." },
+
+    glutebridge: { name: "Glute Bridge", focus: "glute",
+      what: "Lying on your back and lifting your hips by squeezing your bum — the most beginner-friendly bum exercise there is.",
+      setup: ["Lie on your back, knees bent, feet flat about hip-width apart.", "Slide your feet back until your fingertips can just brush your heels.", "Arms flat by your sides, palms down."],
+      do: ["Push through your heels (not your toes) and squeeze your bum to lift your hips toward the ceiling.", "Stop when your body is a straight line from knees to shoulders — don't arch higher.", "Squeeze hard at the top for 1 second.", "Lower slowly (count 'one-two') until your bum almost touches the floor, then go again."],
+      cue: "Breathe out as you lift, in as you lower. You'll feel your bum and the backs of your thighs — that's the point, not your lower back.",
+      heds: "Stop at the straight line, never past it. 'Higher' just dumps into your lower back.",
+      swap: "If it bothers your back, lift only halfway and hold for 3 seconds each rep." },
+    hipthrust: { name: "Banded Hip Thrust", focus: "glute",
+      what: "Like a glute bridge but with your upper back raised on the sofa — a bigger range, and the single best move for building a rounder bum.",
+      setup: ["Sit on the floor with your upper back (shoulder-blade level) against the edge of a sturdy sofa or bed.", "Loop a booty band just above your knees. Feet flat, hip-width apart, knees bent.", "Rest your arms along the sofa edge."],
+      do: ["Push through your heels and squeeze your bum to lift your hips until your body is flat from knees to shoulders, like a tabletop.", "As you rise, gently push your knees out against the band — don't let them cave inward.", "Squeeze hard at the top for 1–2 seconds.", "Lower slowly until your hips are just above the floor, then go again."],
+      cue: "Breathe out as you lift, in as you lower. You'll feel your bum doing almost all the work — more than any other move here.",
+      heds: "Stop at flat and level — don't over-arch past it. Later, rest a light dumbbell across your hips to make it harder.",
+      swap: "Sofa feels awkward at first? Do the floor Glute Bridge until you're comfortable, then progress to this." },
+    clamshell: { name: "Banded Clamshell", focus: "glute",
+      what: "Lying on your side and opening your top knee like a clam — targets the side of your bum that gives you shape.",
+      setup: ["Loop the band just above your knees.", "Lie on your side, knees bent and stacked, hips and shoulders stacked.", "Head resting on your lower arm; steady yourself with your top hand on the floor in front."],
+      do: ["Keeping your feet together and hips still, lift your top knee, opening against the band.", "Only go as far as your hips can stay still — don't roll backward.", "Squeeze the side of your bum at the top, then lower slowly. 15 reps, then swap sides."],
+      cue: "Breathe out as you open, in as you close. If you feel it in your lower back instead of your bum, your hips have rolled — reset.",
+      heds: "Keep hips stacked and still. It's a small movement — small and controlled is correct, not big.",
+      swap: "No band? Do it with no band first (still effective), then add the band once it feels easy." },
+    hipabduction: { name: "Standing Banded Hip Abduction", focus: "glute",
+      what: "Standing and lifting one leg out to the side against the band — the side of your bum, with the chair for safety.",
+      setup: ["Loop the band just above your ankles (or above your knees if comfier to start).", "Stand tall, holding the back of your chair with both hands.", "Feet hip-width apart."],
+      do: ["Keeping your leg straight but knee soft (not locked) and toes pointing forward, lift one leg out to the side against the band.", "Lift only as high as you can without leaning or tipping — usually not far.", "Lower slowly with control. 12 reps, then swap legs."],
+      cue: "Breathe out as you lift, in as you lower. You'll feel the side of your bum on the moving leg working.",
+      heds: "Hold the chair the whole time — your ankles and knees never balance you. Both knees soft, never locked.",
+      swap: "Ankles unhappy with the band low? Move it up above your knees — same muscle, less ankle load." },
+    kickback: { name: "All-Fours Banded Kickback", focus: "glute",
+      what: "On all fours, pressing one foot back and up against the band — shapes the main part of your bum.",
+      setup: ["Loop the band around one foot and hold the ends under your hands (or loop it around one foot and over the opposite thigh).", "Come onto all fours, cushion under your knees. Flatten your back, tighten your tummy."],
+      do: ["Keeping your knee bent at a right angle, press one foot back and up, like pressing a footprint into the ceiling.", "Press only as high as your back stays flat — don't arch. Squeeze your bum at the top.", "Lower slowly. 12 reps, then swap legs."],
+      cue: "Breathe out as you press up, in as you lower. You'll feel the main muscle of your bum squeezing — not your lower back.",
+      heds: "Keep your back flat and still — let your bum do the lift, not your spine. Cushion under the resting knee.",
+      swap: "Band fiddly at first? Do it with no band until the movement feels natural, then add it." },
+
+    shoulderpress: { name: "Seated Shoulder Press", focus: "arm",
+      what: "Pressing weights up overhead while seated — shapes your shoulders, which is what makes arms look toned and defined.",
+      setup: ["Sit tall on your chair, feet flat, back supported.", "Hold a light dumbbell (or filled water bottle) in each hand at shoulder height, palms facing forward, elbows bent."],
+      do: ["Press both weights straight up until your arms are nearly straight — but don't lock or snap your elbows.", "Pause briefly at the top.", "Lower slowly back to shoulder height. 10 reps."],
+      cue: "Breathe out as you press up, in as you lower. Your shoulders and upper arms should feel tired by the last few reps — that's good.",
+      heds: "Stop just before your elbows fully straighten — never lock them out. Start lighter than you think.",
+      swap: "Too much overhead? Press up only to eye level, or use lighter bottles, and build the range over time." },
+    bicepcurl: { name: "Bicep Curl", focus: "arm",
+      what: "Curling weights up toward your shoulders — works the front of your upper arm.",
+      setup: ["Sit tall or stand with a light dumbbell/bottle in each hand, arms hanging by your sides, palms facing forward."],
+      do: ["Keeping your elbows tucked at your sides, bend your arms to curl the weights up toward your shoulders.", "Squeeze briefly at the top.", "Lower slowly all the way down (count 'one-two'). 12 reps."],
+      cue: "Breathe out as you curl up, in as you lower. The slow way down is where the toning happens — don't drop the weight.",
+      heds: "Don't lock your elbows straight at the bottom — stop just short, and control the lower.",
+      swap: "No weights yet? Two filled water bottles work perfectly to start." },
+    tricepkickback: { name: "Tricep Kickback", focus: "arm",
+      what: "With support, straightening your arm behind you — targets the back of your upper arm, the exact area you want toned.",
+      setup: ["Place one hand and one knee on the seat of your chair, back flat and roughly parallel to the floor.", "Hold a light dumbbell/bottle in your free hand, elbow bent at your side, upper arm level with your body."],
+      do: ["Keeping your upper arm still and pinned to your side, straighten your arm to press the weight back behind you.", "Squeeze the back of your arm at the top — don't lock the elbow hard.", "Slowly bend back to the start. 12 reps, then swap arms."],
+      cue: "Breathe out as you straighten, in as you bend back. You'll feel the back of your upper arm — this is your target zone.",
+      heds: "Support yourself on the chair so your back and shoulder stay safe. Straighten to nearly-straight, not a hard lock.",
+      swap: "Bending forward uncomfortable? Sit tall in the chair, lean forward slightly, and do the same arm movement." },
+    pullapart: { name: "Band Pull-Apart", focus: "arm",
+      what: "Pulling a band apart in front of you — strengthens your upper back and posture, which instantly makes you look more toned and pulled-in.",
+      setup: ["Hold a light band with both hands out in front at chest height, arms straight, hands about shoulder-width apart.", "Sit or stand tall."],
+      do: ["Keeping your arms straight, pull the band apart, moving your hands out to the sides and squeezing your shoulder-blades together.", "Bring your hands out until the band nearly touches your chest.", "Slowly return with control. 15 reps."],
+      cue: "Breathe out as you pull apart, in as you return. You'll feel it across your upper back and shoulders — great for posture.",
+      heds: "Shoulders down and relaxed, arms straight but elbows not locked. Use a light band; you don't need much.",
+      swap: "No band? Do the same motion with a light towel held taut, squeezing your shoulder-blades together." },
+  },
+
+  sessions: {
+    warmup: { eyebrow: "Every session · ~5 min", title: "Warm-up", meta: "The same six moves each time — wake the muscles up, don't stretch them out.",
+      moves: [["marches", "~1 min"], ["catcow", "× 8"], ["glutebridge", "× 12"], ["kneepushouts", "× 15"], ["armcircles", "10 each way"], ["deadbug", "× 8, light"]] },
+    tue: { eyebrow: "Tuesday evening · ~20–25 min", title: "Core + Arms", short: "Core + Arms", meta: "After work, before your PM skincare.",
+      moves: [["shoulderpress", "3 × 10"], ["bicepcurl", "3 × 12"], ["tricepkickback", "3 × 12 ea. arm"], ["pullapart", "3 × 15"], ["deadbug", "3 × 10"], ["birddog", "3 × 8 ea. side"], ["pallof", "3 × 20 sec ea. side"], ["sideplank", "3 × 15–20 sec ea. side"]] },
+    thu: { eyebrow: "Thursday evening · ~20–25 min", title: "Core + Glutes", short: "Core + Glutes", meta: "After work, before your PM skincare.",
+      moves: [["hipthrust", "3 × 12"], ["glutebridge", "3 × 15"], ["clamshell", "3 × 15 ea. side"], ["hipabduction", "3 × 12 ea. leg"], ["kickback", "3 × 12 ea. leg"], ["deadbug", "3 × 10"], ["birddog", "3 × 8 ea. side"], ["heeltaps", "3 × 10"]] },
+    sun: { eyebrow: "Sunday · ~30–35 min", title: "Full body", short: "Full body", meta: "Your freest day — the big one.",
+      moves: [["hipthrust", "3 × 12"], ["glutebridge", "3 × 15"], ["clamshell", "3 × 15 ea. side"], ["shoulderpress", "3 × 10"], ["bicepcurl", "3 × 12"], ["tricepkickback", "3 × 12 ea. arm"], ["deadbug", "3 × 10"], ["birddog", "3 × 8 ea. side"], ["sideplank", "3 × 15–20 sec ea. side"], ["pallof", "3 × 20 sec ea. side"]],
+      extra: "Optional finish — 10 minutes easy on the walking pad while you watch TV. Never mandatory; your fat loss runs on protein, not this." },
+  },
+
+  progression: [
+    "Weeks 1–2 — lightest band, learn every move, slow and controlled. The easier version is fine.",
+    "Weeks 3–4 — add reps (to the top of the range) or step up to the medium band.",
+    "Weeks 5–6 — heavier band, a light dumbbell on your hips for thrusts, and lower for a slow count of 3.",
+    "Weeks 7–8 — heaviest band, a touch more weight, or a fourth set of your favourites.",
+    "Ongoing — when a move feels easy, that's your cue to make it harder.",
+  ],
+};
+
+/* Session key for a weekday, or null on a Rest day. */
+function sessionForDay(dayKey) { return WORKOUT.schedule[dayKey] || null; }
+
+/* ============================================================================
+   COMPLETION LOG + TRACKER (streaks & achievements)
+   ----------------------------------------------------------------------------
+   Log shape: { done: { 'YYYY-MM-DD': { am:true, workout:true, pm:true, protein:true } } }
+   Blocks per day: am + pm always; workout only on training days; protein is a
+   daily bonus that never breaks a streak. A day is "complete" when its required
+   blocks (am, pm, and workout if a training day) are all ticked.
+   ============================================================================ */
+const LOG_KEY = "ritual.log.v1";
+function loadLog() {
+  try { return JSON.parse(localStorage.getItem(LOG_KEY)) || { done: {} }; }
+  catch (e) { return { done: {} }; }
+}
+function saveLog(l) { localStorage.setItem(LOG_KEY, JSON.stringify(l)); }
+
+function isDone(dateIso, block) {
+  const l = loadLog(); return !!(l.done[dateIso] && l.done[dateIso][block]);
+}
+function setDone(dateIso, block, val) {
+  const l = loadLog();
+  const day = l.done[dateIso] || (l.done[dateIso] = {});
+  if (val) day[block] = true; else delete day[block];
+  if (Object.keys(day).length === 0) delete l.done[dateIso];
+  saveLog(l);
+}
+function toggleDone(dateIso, block) { const now = !isDone(dateIso, block); setDone(dateIso, block, now); return now; }
+
+/* Required blocks for a date (protein excluded — it's a bonus). */
+function requiredBlocks(dateIso) {
+  const dayKey = DAY_KEYS[fromIso(dateIso).getDay()];
+  const req = ["am", "pm"];
+  if (sessionForDay(dayKey)) req.push("workout");
+  return req;
+}
+function isCompleteDay(dateIso) {
+  const l = loadLog(); const day = l.done[dateIso]; if (!day) return false;
+  return requiredBlocks(dateIso).every(b => day[b]);
+}
+
+/* Current streak: consecutive complete days ending today (or yesterday if today
+   isn't finished yet, so an unfinished today never reads as a broken streak). */
+function currentStreak(now) {
+  let d = startOfDay(now);
+  if (!isCompleteDay(iso(d))) d = addDays(d, -1);
+  let n = 0, guard = 0;
+  while (guard++ < 1000 && isCompleteDay(iso(d))) { n++; d = addDays(d, -1); }
+  return n;
+}
+function longestStreak() {
+  const l = loadLog(); const keys = Object.keys(l.done).sort();
+  if (!keys.length) return 0;
+  let best = 0, run = 0, cursor = null;
+  for (let d = fromIso(keys[0]); d <= fromIso(keys[keys.length - 1]); d = addDays(d, 1)) {
+    if (isCompleteDay(iso(d))) { run++; best = Math.max(best, run); } else { run = 0; }
+    cursor = d;
+  }
+  return best;
+}
+function countBlock(block) {
+  const l = loadLog(); let n = 0;
+  for (const k in l.done) if (l.done[k][block]) n++;
+  return n;
+}
+function countCompleteDays() {
+  const l = loadLog(); let n = 0;
+  for (const k in l.done) if (isCompleteDay(k)) n++;
+  return n;
+}
+
+/* Microneedling sessions the user has confirmed (from the skincare cycle). */
+function microSessionsDone() {
+  const st = loadState();
+  if (!st || !st.answers) return 0;
+  return Object.values(st.answers).filter(v => v === "yes").length;
+}
+
+/* Optional bonus habits — tracked, but never required for a streak. */
+const EXTRA_BLOCKS = ["protein", "water", "vitamins", "move", "sleep"];
+
+/* A "perfect day" = a complete day plus every bonus habit ticked. */
+function isPerfectDay(dateIso) {
+  if (!isCompleteDay(dateIso)) return false;
+  const l = loadLog(); const day = l.done[dateIso] || {};
+  return EXTRA_BLOCKS.every(b => day[b]);
+}
+function countPerfectDays() {
+  const l = loadLog(); let n = 0;
+  for (const k in l.done) if (isPerfectDay(k)) n++;
+  return n;
+}
+
+function trackerStats(now) {
+  return {
+    streak: currentStreak(now),
+    longest: longestStreak(),
+    workouts: countBlock("workout"),
+    protein: countBlock("protein"),
+    completeDays: countCompleteDays(),
+    am: countBlock("am"),
+    pm: countBlock("pm"),
+    micro: microSessionsDone(),
+    water: countBlock("water"),
+    vitamins: countBlock("vitamins"),
+    move: countBlock("move"),
+    sleep: countBlock("sleep"),
+    perfect: countPerfectDays(),
+  };
+}
+
+/* Achievements — consistency milestones only, never weight or looks. Each has a
+   group, a target, and the current value so the UI can show progress. */
+function achievements(now) {
+  const s = trackerStats(now);
+  const A = (id, label, desc, group, value, target) => ({
+    id, label, desc, group, value, target,
+    earned: value >= target,
+    pct: Math.max(0, Math.min(100, Math.round((value / target) * 100))),
+  });
+  return [
+    A("day1",    "First full day",     "Finish one whole day",            "streak",   s.completeDays, 1),
+    A("streak3", "3-day streak",        "3 complete days in a row",        "streak",   s.longest, 3),
+    A("week1",   "First full week",     "7 complete days in a row",        "streak",   s.longest, 7),
+    A("week2",   "Two-week streak",     "14 complete days in a row",       "streak",   s.longest, 14),
+    A("month1",  "One month strong",    "28 complete days in a row",       "streak",   s.longest, 28),
+    A("week8",   "Eight-week streak",   "56 complete days in a row",       "streak",   s.longest, 56),
+    A("club12",  "12-week club",        "84 complete days in total",       "streak",   s.completeDays, 84),
+
+    A("w1",      "First workout",       "Complete any session",            "workout",  s.workouts, 1),
+    A("w5",      "Five sessions",       "Do 5 workouts",                   "workout",  s.workouts, 5),
+    A("w10",     "Ten sessions",        "Do 10 workouts",                  "workout",  s.workouts, 10),
+    A("w25",     "Twenty-five sessions","Do 25 workouts",                  "workout",  s.workouts, 25),
+    A("w50",     "Fifty sessions",      "Do 50 workouts",                  "workout",  s.workouts, 50),
+    A("w100",    "Century",             "Do 100 workouts",                 "workout",  s.workouts, 100),
+
+    A("am7",     "Morning person",      "7 morning skincare routines",     "skincare", s.am, 7),
+    A("pm30",    "Night ritual",        "30 evening skincare routines",    "skincare", s.pm, 30),
+    A("needle1", "First needling",      "Confirm a microneedling session", "skincare", s.micro, 1),
+    A("needle3", "Needling regular",    "3 microneedling sessions",        "skincare", s.micro, 3),
+
+    A("p7",      "Protein week",        "7 protein days",                  "protein",  s.protein, 7),
+    A("p30",     "Protein habit",       "30 protein shakes",               "protein",  s.protein, 30),
+
+    A("water7",  "Hydrated",            "7 days of water",                 "extra",    s.water, 7),
+    A("water30", "Well hydrated",       "30 days of water",                "extra",    s.water, 30),
+    A("vit7",    "Vitamins on",         "7 days of vitamins",              "extra",    s.vitamins, 7),
+    A("vit30",   "Vitamin habit",       "30 days of vitamins",             "extra",    s.vitamins, 30),
+    A("move7",   "Moving more",         "7 days of movement",              "extra",    s.move, 7),
+    A("move30",  "Mover",               "30 days of movement",             "extra",    s.move, 30),
+    A("sleep7",  "Well rested",         "7 good nights' sleep",            "extra",    s.sleep, 7),
+    A("sleep30", "Rested habit",        "30 good nights' sleep",           "extra",    s.sleep, 30),
+
+    A("perfect1","First perfect day",   "Tick everything in one day",      "milestone",s.perfect, 1),
+    A("perfect7","Perfect week",        "7 perfect days",                  "milestone",s.perfect, 7),
+    A("perfect30","Perfectionist",      "30 perfect days",                 "milestone",s.perfect, 30),
+  ];
+}
+
+
+/* ===================== Ritual hub — render ===================== */
 const ACCENT = {retinol:"--ac-retinol",repair:"--ac-repair",bha:"--ac-bha",sleep:"--ac-sleep",calm:"--ac-calm",session:"--ac-session"};
 const WARN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+const CHEV = '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>';
 
 let now = new Date();
 let view = "today";
-let phaseOverride = null;
+let skinTab = "week";
+let workoutTab = null;
 
 const $ = s => document.querySelector(s);
-const esc = s => s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const esc = s => String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const accentVar = a => `var(${ACCENT[a]||"--ac-repair"})`;
 
 function stepsHTML(steps){
@@ -657,6 +1070,7 @@ function stepsHTML(steps){
     return `<li class="${wait?"wait":""}">${esc(text)}</li>`;
   }).join("")+'</ol>';
 }
+function railHTML(arr){ return '<ol class="rail">'+arr.map(s=>`<li>${esc(s)}</li>`).join("")+'</ol>'; }
 function warnsHTML(warns){
   if(!warns||!warns.length) return "";
   return warns.map(w=>`<div class="warn">${WARN_SVG}<span>${esc(w)}</span></div>`).join("");
@@ -674,101 +1088,247 @@ function routineBodyHTML(day){
   h+=warnsHTML(day.warns);
   return h;
 }
-
 function fmtLong(d){return d.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});}
 
+/* ---------- Today: the aggregated daily checklist ---------- */
+function workoutBlockBody(sessKey){
+  const s = WORKOUT.sessions[sessKey];
+  const list = s.moves.map(([id,dose])=>`<li><span>${esc(WORKOUT.moves[id].name)}</span><span class="d">${esc(dose)}</span></li>`).join("");
+  return `<p class="note">Start with your 5-minute warm-up, then work through these. Tap below for the full how-to on any move.</p>
+    <ul class="movelist">${list}</ul>
+    <button class="linkbtn" data-openworkout="${sessKey}">Open full how-to →</button>`;
+}
+function blockCardHTML(o){
+  return `<div class="block ${o.done?"done":""} ${o.open?"open":""}">
+    <div class="bhead" data-blocktoggle>
+      <span class="bicon">${o.icon}</span>
+      <span class="btitle"><b>${esc(o.title)}</b><small>${esc(o.sub)}</small></span>
+      <span class="bcheck ${o.done?"on":""}" data-doneblock="${o.block}" role="button" aria-label="Mark ${esc(o.title)} done">✓</span>
+      ${CHEV}
+    </div>
+    <div class="bbody">${o.body}</div>
+  </div>`;
+}
 function renderToday(){
   const c = computeCycle(now);
   const dayKey = DAY_KEYS[now.getDay()];
-  const phase = phaseOverride || phaseNow(now);
   const micro = c.configured && c.microActive;
   const pmDay = routineFor(dayKey, micro);
-  const accent = phase==="am" ? "repair" : pmDay.accent;
-  const title = phase==="am" ? "Morning" : pmDay.theme;
+  const sessKey = sessionForDay(dayKey);
+  const today = iso(now);
 
-  let promptHTML="";
+  let promptHTML = "";
   if(c.configured && c.needPrompt){
-    promptHTML=`<div class="prompt">
+    promptHTML = `<div class="prompt">
       <p class="ttl">Microneedling week</p>
       <p class="sub">This is a predicted session week. Are you doing it?</p>
       <div class="row"><button class="yes" data-act="yes">Yes, this week</button><button class="no" data-act="no">Not this week</button></div>
     </div>`;
   }
 
-  // AM note only matters during recovery mornings
-  let amNote="";
-  if(phase==="am" && micro && pmDay.amNote) amNote=`<p class="note">${esc(pmDay.amNote)}</p>`;
+  const blocks = [];
+  blocks.push({block:"am", icon:"☀", title:"Morning skincare", sub:`${DATA.am.steps.length} steps`, body:stepsHTML(DATA.am.steps)});
+  if(sessKey){
+    const s = WORKOUT.sessions[sessKey];
+    blocks.push({block:"workout", icon:"🏋", title:"Workout", sub:`${s.short} · ${s.moves.length} moves`, body:workoutBlockBody(sessKey)});
+  }
+  blocks.push({block:"pm", icon:"☾", title:"Evening skincare", sub:pmDay.theme, body:routineBodyHTML(pmDay)});
+  blocks.push({block:"protein", icon:"🥤", title:"Protein", sub:"Bonus habit", body:`<p class="note">One protein shake, or a high-protein yogurt or bar. It never breaks your streak — but it's the single biggest accelerator for a toned tummy and arms, so tick it when you can.</p>`});
 
-  const body = phase==="am"
-    ? amNote + stepsHTML(DATA.am.steps)
-    : routineBodyHTML(pmDay);
+  let opened = false;
+  const cards = blocks.map(b=>{
+    const done = isDone(today, b.block);
+    const open = !done && !opened;
+    if(open) opened = true;
+    return blockCardHTML({...b, done, open});
+  }).join("");
+
+  const st = trackerStats(now);
+  const chip = st.streak>0 ? `<span class="chip">🔥 ${st.streak}-day streak</span>` : `<span class="chip">A fresh start</span>`;
+  const rest = sessKey ? "" : `<span class="restnote">· workout rest day</span>`;
+
+  const extraDefs = [["water","💧","Water"],["vitamins","💊","Vitamins"],["move","🚶","Movement"],["sleep","😴","Sleep"]];
+  const chips = extraDefs.map(([b,ic,l])=>`<span class="chiptog ${isDone(today,b)?"on":""}" data-doneblock="${b}" role="button"><span>${ic}</span>${l}<span class="tick">✓</span></span>`).join("");
 
   $("#v-today").innerHTML = `
     ${promptHTML}
-    <div class="hero" style="--ac:${accentVar(accent)}">
+    <div class="hero">
       <div class="eyebrow">${esc(fmtLong(now))}</div>
-      <h1>${esc(title)}</h1>
-      <div class="meta">
-        <span class="dayflag"><span class="dot"></span>${DAY_FULL[dayKey]}</span>
-        ${micro?'<span class="microtag">Needling week</span>':""}
-      </div>
+      <h1>Today</h1>
+      <div class="meta">${chip}${micro?'<span class="microtag">Needling week</span>':""}${rest}</div>
     </div>
-    <div class="phase" role="group" aria-label="Morning or evening">
-      <button data-p="am" class="${phase==="am"?"on":""}">☀︎ Morning</button>
-      <button data-p="pm" class="${phase==="pm"?"on":""}">☾ Evening</button>
-    </div>
-    <div class="card" style="--ac:${accentVar(accent)}">${body}</div>
+    ${cards}
+    <div class="extras"><div class="lab">Daily extras · bonus, never breaks a streak</div><div class="chips">${chips}</div></div>
   `;
 }
 
-function renderWeek(){
-  const c = computeCycle(now);
-  const micro = c.configured && c.microActive;
+/* ---------- Skincare tab (week + needling) ---------- */
+function weekHTML(micro){
   const todayKey = DAY_KEYS[now.getDay()];
-  const order=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  let h=`<div class="hero"><div class="eyebrow">Evenings</div><h1>The week</h1>
-    <div class="meta">${micro?'<span class="microtag">Showing needling week</span>':"Your normal PM rotation"}</div></div>`;
-  h+=`<div style="margin-top:14px"></div>`;
+  const order = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  let h = `<div class="hero"><div class="eyebrow">Evenings</div><h1>The week</h1>
+    <div class="meta">${micro?'<span class="microtag">Showing needling week</span>':"Your normal PM rotation"}</div></div>
+    <div style="margin-top:14px"></div>`;
   order.forEach(k=>{
-    const d=routineFor(k,micro);
-    const isToday=k===todayKey;
-    h+=`<div class="acc ${isToday?"open today":""}" data-acc>
-      <button data-acctoggle><span class="wd">${k}</span><span class="th">${esc(d.theme)}</span>
-        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span></button>
+    const d = routineFor(k, micro);
+    const isToday = k===todayKey;
+    h += `<div class="acc ${isToday?"open today":""}" data-acc>
+      <button data-acctoggle><span class="wd">${k}</span><span class="th">${esc(d.theme)}</span>${CHEV}</button>
       <div class="body">${routineBodyHTML(d)}</div>
     </div>`;
   });
-  $("#v-week").innerHTML=h;
+  return h;
 }
-
-function renderMicro(){
-  const order=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  let h=`<div class="hero"><div class="eyebrow">Every few weeks</div><h1>Needling week</h1></div>
+function microHTML(){
+  const order = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  let h = `<div class="hero"><div class="eyebrow">Every few weeks</div><h1>Needling week</h1></div>
     <div class="devicebadge">✦ ${esc(DATA.meta.device)}</div>`;
   order.forEach(k=>{
-    const d=DATA.micro[k];
-    h+=`<div class="card" style="--ac:${accentVar(d.accent)}">
+    const d = DATA.micro[k];
+    h += `<div class="card" style="--ac:${accentVar(d.accent)}">
       <div class="seclabel" style="margin-top:0">${k} · ${esc(d.theme)}</div>
       ${d.amNote?`<p class="note">AM — ${esc(d.amNote)}</p>`:""}
       ${routineBodyHTML(d)}
     </div>`;
   });
-  h+=`<p class="footnote">${esc(DATA.micro.footer)}</p>`;
-  $("#v-micro").innerHTML=h;
+  h += `<p class="footnote">${esc(DATA.micro.footer)}</p>`;
+  return h;
+}
+function renderSkincare(){
+  const c = computeCycle(now);
+  const micro = c.configured && c.microActive;
+  const seg = `<div class="subseg" id="ssub">
+      <button data-st="week" class="${skinTab==="week"?"on":""}">The week</button>
+      <button data-st="micro" class="${skinTab==="micro"?"on":""}">Needling</button>
+    </div>`;
+  $("#v-skincare").innerHTML = seg + (skinTab==="week" ? weekHTML(micro) : microHTML());
 }
 
+/* ---------- Workout tab ---------- */
+function moveAccHTML(id, dose){
+  const m = WORKOUT.moves[id];
+  return `<div class="acc" data-acc>
+    <button data-acctoggle><span class="th">${esc(m.name)}</span><span class="dose">${esc(dose)}</span>${CHEV}</button>
+    <div class="body">
+      <p class="note">${esc(m.what)}</p>
+      <div class="seclabel">Set up</div>${railHTML(m.setup)}
+      <div class="seclabel">The move</div>${railHTML(m.do)}
+      <p class="note" style="margin-top:14px">${esc(m.cue)}</p>
+      <div class="warn">${WARN_SVG}<span><b>Your joints — </b>${esc(m.heds)}</span></div>
+      <p class="note" style="margin-top:14px"><b style="font-style:normal;color:var(--plum)">Easier version — </b>${esc(m.swap)}</p>
+    </div>
+  </div>`;
+}
+function renderWorkout(){
+  const dayKey = DAY_KEYS[now.getDay()];
+  const todaySess = sessionForDay(dayKey);
+  if(!workoutTab) workoutTab = todaySess || "warmup";
+  const order = ["warmup","tue","thu","sun"];
+  const labels = {warmup:"Warm-up", tue:"Tue", thu:"Thu", sun:"Sun"};
+  let seg = `<div class="subseg" id="wsub">`+order.map(k=>`<button data-wt="${k}" class="${k===workoutTab?"on":""}">${labels[k]}</button>`).join("")+`</div>`;
+
+  const s = WORKOUT.sessions[workoutTab];
+  let h = `<div class="hero"><div class="eyebrow">${esc(s.eyebrow)}</div><h1>${esc(s.title)}</h1><div class="meta">${esc(s.meta)}</div></div>`;
+  let last = null;
+  s.moves.forEach(([id,dose])=>{
+    const f = WORKOUT.moves[id].focus;
+    if(workoutTab!=="warmup" && f!==last){ h += `<div class="seclabel">${esc(WORKOUT.groups[f])}</div>`; last = f; }
+    h += moveAccHTML(id, dose);
+  });
+  if(s.extra) h += `<p class="footnote">${esc(s.extra)}</p>`;
+  h += `<div class="card"><div class="seclabel" style="margin-top:0">How it gets harder</div>${railHTML(WORKOUT.progression)}
+    <p class="note" style="margin-top:14px;margin-bottom:0">The one habit that beats every exercise: a protein shake a day (or a high-protein yogurt/bar). No food changes. On Mounjaro you're likely under-eating protein, and protein is what keeps your arms and stomach toned rather than just smaller.</p></div>
+    <p class="footnote">Not medical advice. With your hEDS and being on Mounjaro, co-codamol and omeprazole, it's worth running "I'm starting light home resistance training" past your GP or an hEDS-aware physio once. You know your body — stop anything that feels wrong.</p>`;
+  $("#v-workout").innerHTML = seg + h;
+}
+
+/* ---------- Progress tab (goals · stats · achievements) ---------- */
+function renderProgress(){
+  const st = trackerStats(now);
+  const ach = achievements(now);
+  const log = loadLog().done;
+
+  // 28-day consistency grid
+  let cells = "";
+  const start = addDays(startOfDay(now), -27);
+  for(let i=0;i<28;i++){
+    const d = addDays(start, i);
+    const di = iso(d);
+    let cls = "cell";
+    if(isCompleteDay(di)) cls += " full"; else if(log[di]) cls += " partial";
+    if(di===iso(now)) cls += " today";
+    cells += `<div class="${cls}">${d.getDate()}</div>`;
+  }
+
+  // achievements grouped, with a progress bar on the locked ones
+  function badgeHTML(a){
+    const body = a.earned
+      ? `<small class="done">Earned ✓</small>`
+      : `<small>${esc(a.desc)} · ${a.value}/${a.target}</small><div class="bar"><i style="width:${a.pct}%"></i></div>`;
+    return `<div class="badge ${a.earned?"earned":"locked"}">
+      <span class="ic">${a.earned?"★":"○"}</span>
+      <span class="bt"><b>${esc(a.label)}</b>${body}</span>
+    </div>`;
+  }
+  const groups = [["streak","Streaks & consistency"],["workout","Workouts"],["skincare","Skincare"],["protein","Protein"],["extra","Daily extras"],["milestone","Milestones"]];
+  let achHTML = "";
+  groups.forEach(([g,label])=>{
+    const items = ach.filter(a=>a.group===g);
+    const won = items.filter(a=>a.earned).length;
+    achHTML += `<div class="grouphead">${esc(label)}<span class="cnt">${won}/${items.length}</span></div>
+      <div class="badges">${items.map(badgeHTML).join("")}</div>`;
+  });
+  const wonTotal = ach.filter(a=>a.earned).length;
+
+  $("#v-progress").innerHTML = `
+    <div class="hero"><div class="eyebrow">Your progress</div><h1>Wins &amp; stats</h1>
+      <div class="meta">${wonTotal} of ${ach.length} achievements · consistency is the whole game.</div></div>
+
+    <div class="goals">
+      <h3>What you're working toward</h3>
+      <ul>
+        <li><span class="rank">1.</span><span>A toned, flatter stomach</span></li>
+        <li><span class="rank">2.</span><span>Toned upper arms</span></li>
+        <li><span class="rank">3.</span><span>A rounder, stronger bum</span></li>
+      </ul>
+      <p class="mantra">Feminine and toned, not bulky — measured by showing up, never by the scale.</p>
+    </div>
+
+    <div class="statgrid">
+      <div class="stat big"><div class="n">${st.streak}</div><div class="k">Day streak</div></div>
+      <div class="stat"><div class="n">${st.workouts}</div><div class="k">Workouts done</div></div>
+      <div class="stat"><div class="n">${st.longest}</div><div class="k">Longest streak</div></div>
+      <div class="stat"><div class="n">${st.completeDays}</div><div class="k">Full days</div></div>
+      <div class="stat"><div class="n">${st.protein}</div><div class="k">Protein days</div></div>
+      <div class="stat"><div class="n">${st.am}</div><div class="k">Morning skincare</div></div>
+      <div class="stat"><div class="n">${st.pm}</div><div class="k">Evening skincare</div></div>
+      <div class="stat"><div class="n">${st.micro}</div><div class="k">Needling sessions</div></div>
+      <div class="stat"><div class="n">${st.water}</div><div class="k">Water days</div></div>
+      <div class="stat"><div class="n">${st.sleep}</div><div class="k">Sleep days</div></div>
+      <div class="stat"><div class="n">${st.perfect}</div><div class="k">Perfect days</div></div>
+    </div>
+
+    <div class="seclabel">Last 4 weeks</div>
+    <div class="gridcal">${cells}</div>
+    <p class="footnote" style="margin-top:8px">Filled = a full day done · faded = a partial day.</p>
+
+    ${achHTML}
+  `;
+}
+
+/* ---------- Settings ---------- */
 function renderSettings(){
   const c = computeCycle(now);
   const st = loadState();
   let stat;
-  if(!st){ stat=`Not set up yet.`; }
+  if(!st){ stat = `Not set up yet.`; }
   else {
-    const next=c.candidateFriday.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+    const next = c.candidateFriday.toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
     const when = c.microActive ? "This is a needling week." :
       (c.weeksUntil<=0?"Predicted this week.":`About <b>${c.weeksUntil} week${c.weeksUntil===1?"":"s"}</b> away.`);
-    stat=`Next session predicted for <b>${next}</b>. ${when}`;
+    stat = `Next session predicted for <b>${next}</b>. ${when}`;
   }
-  $("#v-settings").innerHTML=`
+  $("#v-settings").innerHTML = `
     <div class="hero"><div class="eyebrow">Settings</div><h1>Your cycle</h1></div>
     <div class="cyclestat" style="margin-top:14px">${stat}</div>
     <div class="field"><label for="se-date">Last session date</label>
@@ -780,75 +1340,144 @@ function renderSettings(){
       <div class="help">A new session you confirm becomes the next anchor automatically.</div></div>
     <button class="btn" id="se-save">Save</button>
     <button class="btn ghost" id="se-reset">Reset all cycle data</button>
+
+    <div class="seclabel">Reminders</div>
+    <div id="notif-card" class="cyclestat"></div>
+    <button class="btn" id="notif-enable" style="margin-top:12px">Turn on reminders</button>
+    <div class="field"><div class="help">On iPhone, notifications only work once the app is added to your Home Screen (Share → Add to Home Screen) and reopened from there.</div></div>
   `;
-  if(st) $("#se-int").value=String(st.interval);
+  if(st) $("#se-int").value = String(st.interval);
+  updateNotifCard();
 }
 
-function render(){
-  renderToday();
-  if(view==="week") renderWeek();
-  if(view==="micro") renderMicro();
-  if(view==="settings") renderSettings();
+/* ---------- push notifications ---------- */
+function pushSupported(){
+  return typeof navigator!=="undefined" && "serviceWorker" in navigator
+    && typeof window!=="undefined" && "PushManager" in window && "Notification" in window;
+}
+function urlB64ToUint8Array(b64){
+  const pad = "=".repeat((4 - b64.length % 4) % 4);
+  const base = (b64 + pad).replace(/-/g,"+").replace(/_/g,"/");
+  const raw = atob(base);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+async function registerSW(){
+  try { return await navigator.serviceWorker.register("sw.js"); }
+  catch(e){ return null; }
+}
+function pushConfigured(){ return !!(PUSH_CONFIG.apiBase && PUSH_CONFIG.vapidPublicKey); }
+async function enablePush(){
+  const card = $("#notif-card"); if(!card) return;
+  if(!pushSupported()){ card.textContent = "This device can't do notifications here yet. On iPhone: Share → Add to Home Screen, then reopen the app from your Home Screen."; return; }
+  if(!pushConfigured()){ card.textContent = "Reminders aren't connected yet — deploy the push-service and paste its URL + key into PUSH_CONFIG (build/core.js), then rebuild."; return; }
+  card.textContent = "Asking for permission…";
+  let perm;
+  try { perm = await Notification.requestPermission(); } catch(e){ perm = "denied"; }
+  if(perm!=="granted"){ card.textContent = "Notifications are blocked. Turn them on for this site in your phone/browser settings, then try again."; return; }
+  const reg = await registerSW();
+  if(!reg){ card.textContent = "Couldn't register the reminder worker — this needs the app served over https (your Coolify domain)."; return; }
+  try {
+    await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(PUSH_CONFIG.vapidPublicKey),
+    });
+    const res = await fetch(PUSH_CONFIG.apiBase.replace(/\/$/,"") + "/subscribe", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ subscription: sub, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+    });
+    if(!res.ok) throw new Error("server " + res.status);
+    localStorage.setItem("ritual.push.on","1");
+    updateNotifCard();
+  } catch(e){ card.textContent = "Couldn't subscribe (" + e.message + "). Try again once the push-service is running."; }
+}
+function updateNotifCard(){
+  const card = $("#notif-card"), btn = $("#notif-enable"); if(!card) return;
+  if(!pushSupported()){ card.textContent = "On iPhone, add this app to your Home Screen (Share → Add to Home Screen) and reopen it to enable reminders."; if(btn) btn.style.display="none"; return; }
+  if(!pushConfigured()){ card.textContent = "Reminders will switch on here once the push-service is deployed. The routine and tracker work fully without them."; if(btn) btn.style.display="none"; return; }
+  if(btn) btn.style.display="";
+  if(Notification.permission==="granted" && localStorage.getItem("ritual.push.on")){
+    card.textContent = "Reminders are on — a nudge for each Tue/Thu/Sun workout and your morning & evening skincare.";
+    if(btn) btn.textContent = "Re-subscribe this device";
+  } else {
+    card.textContent = "Get a gentle nudge for your Tue/Thu/Sun workouts and your morning & evening skincare.";
+    if(btn) btn.textContent = "Turn on reminders";
+  }
 }
 
+function renderCurrent(){
+  if(view==="today") renderToday();
+  else if(view==="skincare") renderSkincare();
+  else if(view==="workout") renderWorkout();
+  else if(view==="progress") renderProgress();
+  else if(view==="settings") renderSettings();
+}
 function setView(v){
-  view=v;
+  view = v;
   document.querySelectorAll(".view").forEach(el=>el.classList.remove("on"));
   $("#v-"+v).classList.add("on");
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
-  if(v==="week") renderWeek();
-  if(v==="micro") renderMicro();
-  if(v==="settings") renderSettings();
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  renderCurrent();
   window.scrollTo({top:0,behavior:"auto"});
 }
 
-/* events */
-$("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setView(b.dataset.v);});
-$("#gear").addEventListener("click",()=>setView("settings"));
+/* ---------- events ---------- */
+$("#nav").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) setView(b.dataset.v); });
+$("#gear").addEventListener("click", ()=>setView("settings"));
 
-document.body.addEventListener("click",e=>{
-  const p=e.target.closest(".phase button");
-  if(p){phaseOverride=p.dataset.p;renderToday();return;}
-  const act=e.target.closest("[data-act]");
-  if(act){answerWeek(now,act.dataset.act==="yes");render();return;}
-  const tog=e.target.closest("[data-acctoggle]");
-  if(tog){tog.closest("[data-acc]").classList.toggle("open");return;}
-});
-
-/* setup */
-function openSetup(){
-  $("#su-date").value="";
-  $("#setup").classList.add("on");
-}
-$("#su-save").addEventListener("click",()=>{
-  const v=$("#su-date").value; if(!v){$("#su-date").focus();return;}
-  setupCycle(fromIso(v), parseInt($("#su-int").value,10));
-  $("#setup").classList.remove("on"); render();
-});
-$("#su-skip").addEventListener("click",()=>{
-  // seed an anchor far in the future-neutral past so no week is ever flagged until they set it.
-  saveState({lastSession:iso(fridayOf(new Date())),interval:99,answers:{}});
-  $("#setup").classList.remove("on"); render();
-});
-
-/* settings save/reset (delegated since rerendered) */
-document.body.addEventListener("click",e=>{
+document.body.addEventListener("click", e=>{
+  // mark a Today block done
+  const chk = e.target.closest("[data-doneblock]");
+  if(chk){ toggleDone(iso(now), chk.dataset.doneblock); renderToday(); return; }
+  // expand/collapse a Today block
+  const bt = e.target.closest("[data-blocktoggle]");
+  if(bt){ bt.closest(".block").classList.toggle("open"); return; }
+  // jump into the Workout tab at a given session
+  const ow = e.target.closest("[data-openworkout]");
+  if(ow){ workoutTab = ow.dataset.openworkout; setView("workout"); return; }
+  // workout sub-tabs
+  const wt = e.target.closest("[data-wt]");
+  if(wt){ workoutTab = wt.dataset.wt; renderWorkout(); window.scrollTo({top:0,behavior:"auto"}); return; }
+  // skincare sub-tabs
+  const stb = e.target.closest("[data-st]");
+  if(stb){ skinTab = stb.dataset.st; renderSkincare(); return; }
+  // accordions (week + workout moves)
+  const tog = e.target.closest("[data-acctoggle]");
+  if(tog){ tog.closest("[data-acc]").classList.toggle("open"); return; }
+  // microneedling prompt
+  const act = e.target.closest("[data-act]");
+  if(act){ answerWeek(now, act.dataset.act==="yes"); renderToday(); return; }
+  // settings save / reset
   if(e.target.id==="se-save"){
     const v=$("#se-date").value; if(!v)return;
     const st=loadState()||{answers:{}};
     st.lastSession=iso(fridayOf(fromIso(v)));
     st.interval=parseInt($("#se-int").value,10);
     st.answers=st.answers||{};
-    saveState(st); renderSettings(); renderToday();
+    saveState(st); renderSettings();
   }
   if(e.target.id==="se-reset"){
     localStorage.removeItem(STORE_KEY); openSetup(); renderSettings();
   }
+  if(e.target.id==="notif-enable"){ enablePush(); return; }
+});
+
+/* setup / first run */
+function openSetup(){ $("#su-date").value=""; $("#setup").classList.add("on"); }
+$("#su-save").addEventListener("click", ()=>{
+  const v=$("#su-date").value; if(!v){$("#su-date").focus();return;}
+  setupCycle(fromIso(v), parseInt($("#su-int").value,10));
+  $("#setup").classList.remove("on"); renderCurrent();
+});
+$("#su-skip").addEventListener("click", ()=>{
+  saveState({lastSession:iso(fridayOf(new Date())),interval:99,answers:{}});
+  $("#setup").classList.remove("on"); renderCurrent();
 });
 
 /* boot */
 if(!loadState()) openSetup();
-render();
+renderToday();
+if(pushSupported() && pushConfigured()) registerSW();
 </script>
 </body>
 </html>

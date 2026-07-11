@@ -1,0 +1,18 @@
+{
+  "name": "ritual-push-service",
+  "version": "1.0.0",
+  "description": "Scheduled web-push reminders for the Quiet Ritual app",
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "vapid": "node -e \"const w=require('web-push');const k=w.generateVAPIDKeys();console.log('VAPID_PUBLIC='+k.publicKey);console.log('VAPID_PRIVATE='+k.privateKey);\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "web-push": "^3.6.7"
+  }
+}
