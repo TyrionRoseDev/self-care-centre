@@ -25,9 +25,12 @@ const SUBS_FILE = path.join(DATA_DIR, "subscriptions.json");
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:you@example.com";
-const pushReady = !!(VAPID_PUBLIC && VAPID_PRIVATE);
-if (pushReady) webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
-else console.warn("[!] No VAPID_PUBLIC / VAPID_PRIVATE — the app will serve, but reminders are OFF until they're set.");
+let pushReady = !!(VAPID_PUBLIC && VAPID_PRIVATE);
+if (pushReady) {
+  try { webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE); }
+  catch (e) { pushReady = false; console.error("[!] Invalid VAPID keys — reminders disabled (app still serves):", e.message); }
+}
+if (!pushReady) console.warn("[!] Reminders are OFF (VAPID keys missing or invalid). The app still serves normally.");
 
 /* ---- subscription store (flat JSON on the /data volume) ---- */
 function ensureStore() {
@@ -100,7 +103,16 @@ app.use((req, res, next) => {
     return res.status(404).end();
   next();
 });
-app.use(express.static(__dirname, { extensions: ["html"], dotfiles: "ignore" }));
+app.use(express.static(__dirname, {
+  extensions: ["html"],
+  dotfiles: "ignore",
+  setHeaders: (res, filePath) => {
+    // The app is a single inlined HTML file, so never let the shell go stale —
+    // every visit fetches the latest. The service worker must revalidate too.
+    if (filePath.endsWith(".html")) res.setHeader("Cache-Control", "no-store");
+    else if (filePath.endsWith("sw.js")) res.setHeader("Cache-Control", "no-cache");
+  },
+}));
 
 /* ---- reminder schedule (server-local time = TZ). Edit freely.
    cron: minute hour day-of-month month day-of-week ---- */
