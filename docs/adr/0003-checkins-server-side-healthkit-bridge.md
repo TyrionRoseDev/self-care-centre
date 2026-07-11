@@ -23,4 +23,9 @@ the browser profile).
 the browser. The owner must set `CHECKIN_TOKEN` in Coolify and paste it once into the
 app's settings. A future reader wondering why a Shortcut POSTs health data to our own
 server instead of the app "just reading Health": that path does not exist on the web
-platform.
+platform. One more inherent limit of the on-phone bridge: HealthKit refuses *reads*
+while the iPhone is locked (verified against Apple's docs, July 2026 — see
+docs/research/shortcuts-healthkit-actions.md), so a time-triggered Shortcut can
+silently skip a night; the Shortcut guards against posting empty data and keeps its
+"Notify When Run" banner as the recovery path. Missed nights are acceptable because
+Check-ins are bonus-only.

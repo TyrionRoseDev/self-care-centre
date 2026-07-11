@@ -42,10 +42,11 @@ curl -X POST https://selfcarecentre.tyrion.uk/api/test -H "X-Admin-Token: <ADMIN
 1. Set `CHECKIN_TOKEN` in Coolify (above) and redeploy.
 2. In the app: gear → **Check-ins → paste the token → Save token**. Done — nightly
    Check-ins now back up to the server (`/data/checkins.json`).
-3. Later, an Apple Shortcut (or Health Auto Export) can POST the same data
+3. An Apple Shortcut (or Health Auto Export) can POST the same data
    automatically: `POST /api/checkin` with header `X-Checkin-Token: <token>` and JSON
    body `{"date":"YYYY-MM-DD","steps":6240,"sleepHours":7.5,"feel":4}` — any subset of
-   the three fields is fine. See docs/adr/0003.
+   the three fields is fine. See docs/adr/0003, and **docs/shortcut-checkin.md** for
+   the tap-by-tap Shortcut build guide.
 
 ## Reminder times
 
