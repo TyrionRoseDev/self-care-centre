@@ -261,6 +261,25 @@
   .chiptog.on{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg);}
   .chiptog.on .tick{border-color:var(--btn-fg);color:var(--btn-fg);}
 
+  /* nightly check-in */
+  .ck-row{display:flex;align-items:center;gap:10px;margin:12px 0;}
+  .ck-row label{flex:0 0 56px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--plum-soft);}
+  .ck-row input{flex:1;min-width:0;font-family:var(--round);font-size:16px;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);}
+  .ck-row .ref{flex:0 0 auto;font-size:12px;color:var(--muted);font-style:italic;white-space:nowrap;}
+  .ck-row .ref.glow{color:var(--rose);font-weight:700;font-style:normal;}
+  .hearts{display:flex;gap:4px;flex:1;}
+  .hearts button{border:none;background:none;font-size:24px;line-height:1;color:var(--line);cursor:pointer;padding:2px 4px;font-family:var(--round);}
+  .hearts button.on{color:var(--rose);}
+  .ck-status{font-size:13px;color:var(--muted);text-align:center;margin-top:10px;font-style:italic;}
+  .ckrow{display:grid;grid-template-columns:44px 1fr 1fr 1.2fr;gap:8px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+  .ckrow:last-child{border-bottom:none;}
+  .ckrow .d{font-family:var(--serif);font-size:13px;color:var(--muted);font-weight:600;}
+  .ckrow .v{font-variant-numeric:tabular-nums;color:var(--ink);}
+  .ckrow .v.dim{color:var(--muted);}
+  .ckrow .f{color:var(--rose);letter-spacing:1px;}
+  .ckrow.avg{border-top:1px solid var(--line);border-bottom:none;}
+  .ckrow.avg .d,.ckrow.avg .v{color:var(--plum);font-weight:700;}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
   /*__THEMECSS__*/
 </style>
@@ -427,7 +446,52 @@ function renderToday(){
     </div>
     ${cards}
     <div class="extras"><div class="lab">Daily extras · bonus, never breaks a streak</div><div class="chips">${chips}</div></div>
+    ${checkinCardHTML(today)}
   `;
+}
+
+/* ---------- Tonight's Check-in (Steps · Sleep · Feel) ---------- */
+let ckFeel = null; // pending heart selection, reset each render
+function heartsHTML(sel){
+  let h = "";
+  for(let i=1;i<=5;i++) h += `<button type="button" data-feelv="${i}" class="${sel&&i<=sel?"on":""}" aria-label="Feel ${i} of 5">${sel&&i<=sel?"♥":"♡"}</button>`;
+  return h;
+}
+function checkinCardHTML(today){
+  const c = getCheckin(today) || {};
+  ckFeel = c.feel || null;
+  const stepsGlow = c.steps!=null && CHECKIN_GENTLE.stepsInRange(c.steps);
+  const sleepGlow = c.sleepHours!=null && CHECKIN_GENTLE.sleepInRange(c.sleepHours);
+  const saved = c.steps!=null || c.sleepHours!=null || c.feel!=null;
+  const status = saved
+    ? (checkinToken() ? "Checked in tonight ✓" : "Checked in on this phone ✓ · add your token in Settings to back it up")
+    : "Optional, ~10 seconds — it never touches your streak.";
+  return `<div class="card" id="ck-card">
+    <div class="seclabel" style="margin-top:0">Tonight's Check-in ✧</div>
+    <div class="ck-row"><label for="ck-steps">Steps</label>
+      <input id="ck-steps" type="number" inputmode="numeric" min="0" max="200000" placeholder="e.g. 6240" value="${c.steps!=null?c.steps:""}">
+      <span class="ref ${stepsGlow?"glow":""}">${CHECKIN_GENTLE.stepsRef}${stepsGlow?" ✧":""}</span></div>
+    <div class="ck-row"><label for="ck-sleep">Sleep</label>
+      <input id="ck-sleep" type="number" inputmode="decimal" min="0" max="24" step="0.1" placeholder="hours, e.g. 7.5" value="${c.sleepHours!=null?c.sleepHours:""}">
+      <span class="ref ${sleepGlow?"glow":""}">${CHECKIN_GENTLE.sleepRef}${sleepGlow?" ✧":""}</span></div>
+    <div class="ck-row"><label>Feel</label><span class="hearts" id="ck-hearts">${heartsHTML(ckFeel)}</span></div>
+    <button class="btn" id="ck-save">Save Check-in</button>
+    <div class="ck-status" id="ck-status">${status}</div>
+  </div>`;
+}
+async function submitCheckin(){
+  const today = iso(now);
+  const fields = {};
+  const sv = $("#ck-steps").value.trim();
+  const hv = $("#ck-sleep").value.trim();
+  if(sv!==""){ const n=Math.round(Number(sv)); if(Number.isFinite(n)&&n>=0) fields.steps=n; }
+  if(hv!==""){ const n=Number(hv); if(Number.isFinite(n)&&n>=0&&n<=24) fields.sleepHours=Math.round(n*10)/10; }
+  if(ckFeel) fields.feel = ckFeel;
+  if(!Object.keys(fields).length){ $("#ck-status").textContent = "Nothing to save yet — any one field is enough."; return; }
+  $("#ck-status").textContent = "Saving…";
+  const r = await saveCheckin(today, fields);
+  renderToday();
+  if(checkinToken() && !r.synced) $("#ck-status").textContent = "Saved on this phone ✓ · couldn't reach the server, it'll still be here.";
 }
 
 /* ---------- Skincare tab (week + needling) ---------- */
@@ -573,8 +637,12 @@ function renderProgress(){
       <div class="stat"><div class="n">${st.micro}</div><div class="k">Needling sessions</div></div>
       <div class="stat"><div class="n">${st.water}</div><div class="k">Water days</div></div>
       <div class="stat"><div class="n">${st.sleep}</div><div class="k">Sleep days</div></div>
+      <div class="stat"><div class="n">${st.checkins}</div><div class="k">Check-ins</div></div>
       <div class="stat"><div class="n">${st.perfect}</div><div class="k">Perfect days</div></div>
     </div>
+
+    <div class="seclabel">Check-ins · last 7 nights</div>
+    <div class="card" style="margin-top:10px">${checkinStripHTML()}</div>
 
     <div class="seclabel">Last 4 weeks</div>
     <div class="gridcal">${cells}</div>
@@ -582,6 +650,36 @@ function renderProgress(){
 
     ${achHTML}
   `;
+}
+
+/* The last-7-nights Check-in strip: steps · sleep · feel per night + averages.
+   Gentle by design — a missing night is just a quiet dash, never a red mark. */
+function checkinStripHTML(){
+  const fmtSteps = s => s>=1000 ? (Math.round(s/100)/10)+"k" : String(s);
+  let rows = "", stepSum=0, stepN=0, slpSum=0, slpN=0, any=false;
+  for(let i=6;i>=0;i--){
+    const d = addDays(startOfDay(now), -i);
+    const di = iso(d);
+    const c = getCheckin(di) || {};
+    if(c.steps!=null||c.sleepHours!=null||c.feel!=null) any=true;
+    if(c.steps!=null){ stepSum+=c.steps; stepN++; }
+    if(c.sleepHours!=null){ slpSum+=c.sleepHours; slpN++; }
+    const hearts = c.feel!=null ? "♥".repeat(c.feel) : "";
+    rows += `<div class="ckrow">
+      <span class="d">${DAY_KEYS[d.getDay()]}${i===0?" ·":""}</span>
+      <span class="v ${c.steps!=null?"":"dim"}">${c.steps!=null?fmtSteps(c.steps):"—"}</span>
+      <span class="v ${c.sleepHours!=null?"":"dim"}">${c.sleepHours!=null?c.sleepHours+"h":"—"}</span>
+      <span class="f">${hearts}</span>
+    </div>`;
+  }
+  if(!any) return `<p class="restnote" style="margin:2px 0">Nothing here yet — your first Check-in will appear tonight.</p>`;
+  const avg = `<div class="ckrow avg">
+    <span class="d">avg</span>
+    <span class="v">${stepN?fmtSteps(Math.round(stepSum/stepN)):"—"}</span>
+    <span class="v">${slpN?(Math.round(slpSum/slpN*10)/10)+"h":"—"}</span>
+    <span class="f"></span>
+  </div>`;
+  return rows + avg;
 }
 
 /* ---------- Settings ---------- */
@@ -613,6 +711,15 @@ function renderSettings(){
     <div id="notif-card" class="cyclestat"></div>
     <button class="btn" id="notif-enable" style="margin-top:12px">Turn on reminders</button>
     <div class="field"><div class="help">On iPhone, notifications only work once the app is added to your Home Screen (Share → Add to Home Screen) and reopened from there.</div></div>
+
+    <div class="seclabel">Check-ins</div>
+    <div class="cyclestat">${checkinToken()
+      ? "Check-ins sync to your server — they're backed up and ready for the Apple Shortcut later."
+      : "Check-ins currently save on this phone only. Paste your <b>Check-in token</b> to back them up to your server."}</div>
+    <div class="field"><label for="ck-token">Check-in token</label>
+      <input type="password" id="ck-token" placeholder="${checkinToken()?"••••••••  (saved)":"paste CHECKIN_TOKEN here"}" autocomplete="off">
+      <div class="help">The CHECKIN_TOKEN from your Coolify environment (see DEPLOY.md). Stored only on this phone. Leave blank and save to disconnect.</div></div>
+    <button class="btn" id="ck-token-save">Save token</button>
   `;
   if(st) $("#se-int").value = String(st.interval);
   updateNotifCard();
@@ -712,6 +819,16 @@ document.body.addEventListener("click", e=>{
   // accordions (week + workout moves)
   const tog = e.target.closest("[data-acctoggle]");
   if(tog){ tog.closest("[data-acc]").classList.toggle("open"); return; }
+  // check-in hearts — toggled in place (a re-render would wipe typed numbers)
+  const fv = e.target.closest("[data-feelv]");
+  if(fv){ const v=parseInt(fv.dataset.feelv,10); ckFeel = ckFeel===v ? null : v; $("#ck-hearts").innerHTML = heartsHTML(ckFeel); return; }
+  if(e.target.id==="ck-save"){ submitCheckin(); return; }
+  if(e.target.id==="ck-token-save"){
+    setCheckinToken($("#ck-token").value);
+    renderSettings();
+    refreshCheckins().then(ok=>{ if(ok && view==="today") renderToday(); });
+    return;
+  }
   // microneedling prompt
   const act = e.target.closest("[data-act]");
   if(act){ answerWeek(now, act.dataset.act==="yes"); renderToday(); return; }
@@ -746,6 +863,8 @@ $("#su-skip").addEventListener("click", ()=>{
 if(!loadState()) openSetup();
 renderToday();
 if(pushSupported() && pushConfigured()) registerSW();
+/* pull server-side check-ins (e.g. from the Shortcut) into the local cache */
+refreshCheckins().then(ok=>{ if(ok) renderCurrent(); });
 </script>
 </body>
 </html>

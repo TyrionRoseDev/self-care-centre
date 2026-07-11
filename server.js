@@ -17,8 +17,11 @@ const webpush = require("web-push");
 const PORT = process.env.PORT || 8080;
 const TZ = process.env.TZ || "Europe/London";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+const CHECKIN_TOKEN = process.env.CHECKIN_TOKEN || "";
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const SUBS_FILE = path.join(DATA_DIR, "subscriptions.json");
+const CHECKINS_FILE = path.join(DATA_DIR, "checkins.json");
+if (!CHECKIN_TOKEN) console.warn("[!] Check-ins are OFF (CHECKIN_TOKEN missing). The app still works; check-ins stay on-device only.");
 
 /* ---- VAPID (push credentials). If absent, the app still serves; reminders are
    simply disabled until the keys are provided as env vars. ---- */
@@ -40,6 +43,10 @@ function ensureStore() {
 function loadSubs() { try { return JSON.parse(fs.readFileSync(SUBS_FILE, "utf8")); } catch (_) { return []; } }
 function saveSubs(list) { fs.writeFileSync(SUBS_FILE, JSON.stringify(list, null, 2)); }
 ensureStore();
+
+/* ---- check-in store (nightly Steps / Sleep / Feel, keyed by date) ---- */
+function loadCheckins() { try { return JSON.parse(fs.readFileSync(CHECKINS_FILE, "utf8")) || {}; } catch (_) { return {}; } }
+function saveCheckins(all) { fs.writeFileSync(CHECKINS_FILE, JSON.stringify(all, null, 2)); }
 
 async function sendToAll(payload) {
   if (!pushReady) return;
@@ -64,7 +71,52 @@ app.use(express.json({ limit: "16kb" }));
 
 /* ---- push API under /api (same origin as the app) ---- */
 const api = express.Router();
-api.get("/health", (_req, res) => res.json({ ok: true, push: pushReady, subs: loadSubs().length, tz: TZ }));
+api.get("/health", (_req, res) => res.json({ ok: true, push: pushReady, checkins: !!CHECKIN_TOKEN, subs: loadSubs().length, tz: TZ }));
+
+/* ---- check-ins: health data, so every read AND write needs the token.
+   Deliberately a separate token from ADMIN_TOKEN (least privilege) and
+   deliberately NOT open like /subscribe (see docs/adr/0003). ---- */
+function requireCheckinToken(req, res) {
+  if (!CHECKIN_TOKEN) { res.status(503).json({ error: "check-ins not configured — set CHECKIN_TOKEN (see DEPLOY.md)" }); return false; }
+  if (req.get("X-Checkin-Token") !== CHECKIN_TOKEN) { res.status(401).json({ error: "unauthorized" }); return false; }
+  return true;
+}
+/* Upsert one night. Partial data is a valid Check-in (a bridge may only manage
+   steps), so fields merge into whatever the date already holds. */
+api.post("/checkin", (req, res) => {
+  if (!requireCheckinToken(req, res)) return;
+  const { date, steps, sleepHours, feel } = req.body || {};
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+  const entry = {};
+  if (steps !== undefined && steps !== null && steps !== "") {
+    const n = Math.round(Number(steps));
+    if (!Number.isFinite(n) || n < 0 || n > 200000) return res.status(400).json({ error: "steps must be 0–200000" });
+    entry.steps = n;
+  }
+  if (sleepHours !== undefined && sleepHours !== null && sleepHours !== "") {
+    const n = Number(sleepHours);
+    if (!Number.isFinite(n) || n < 0 || n > 24) return res.status(400).json({ error: "sleepHours must be 0–24" });
+    entry.sleepHours = Math.round(n * 10) / 10;
+  }
+  if (feel !== undefined && feel !== null && feel !== "") {
+    const n = Math.round(Number(feel));
+    if (!Number.isFinite(n) || n < 1 || n > 5) return res.status(400).json({ error: "feel must be 1–5" });
+    entry.feel = n;
+  }
+  if (!Object.keys(entry).length) return res.status(400).json({ error: "nothing to save — send steps, sleepHours or feel" });
+  const all = loadCheckins();
+  all[date] = { ...(all[date] || {}), ...entry, updated: new Date().toISOString() };
+  saveCheckins(all);
+  res.json({ ok: true, checkin: all[date] });
+});
+api.get("/checkins", (req, res) => {
+  if (!requireCheckinToken(req, res)) return;
+  const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 366);
+  const all = loadCheckins();
+  const out = {};
+  for (const k of Object.keys(all).sort().slice(-days)) out[k] = all[k];
+  res.json({ ok: true, checkins: out });
+});
 api.post("/subscribe", (req, res) => {
   const { subscription, tz } = req.body || {};
   if (!subscription || !subscription.endpoint) return res.status(400).json({ error: "missing subscription" });

@@ -16,6 +16,7 @@ just one Coolify resource to configure.
    VAPID_SUBJECT=mailto:euanmorgan48@gmail.com
    TZ=Europe/London
    ADMIN_TOKEN=<any random string>
+   CHECKIN_TOKEN=<a different random string — protects your nightly check-ins>
    DATA_DIR=/data
    PORT=8080
    ```
@@ -35,6 +36,16 @@ Test buzz:
 ```
 curl -X POST https://selfcarecentre.tyrion.uk/api/test -H "X-Admin-Token: <ADMIN_TOKEN>"
 ```
+
+## Check-ins (steps · sleep · feel)
+
+1. Set `CHECKIN_TOKEN` in Coolify (above) and redeploy.
+2. In the app: gear → **Check-ins → paste the token → Save token**. Done — nightly
+   Check-ins now back up to the server (`/data/checkins.json`).
+3. Later, an Apple Shortcut (or Health Auto Export) can POST the same data
+   automatically: `POST /api/checkin` with header `X-Checkin-Token: <token>` and JSON
+   body `{"date":"YYYY-MM-DD","steps":6240,"sleepHours":7.5,"feel":4}` — any subset of
+   the three fields is fine. See docs/adr/0003.
 
 ## Reminder times
 
