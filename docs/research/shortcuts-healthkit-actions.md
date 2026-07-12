@@ -101,10 +101,11 @@ Analysis is a *category* sample whose Value is a stage string, **not** a number 
 `Calculate Statistics · Sum` (which sums numeric sample *values*) does **not** cleanly total sleep
 hours the way it totals steps. The reliable, widely-used pattern is:
 
-> **Recommended sleep recipe:**
-> 1. `Find All Health Samples where [Sleep Analysis]`, with a **Value is** filter limiting to asleep
->    stages (Core, Deep, REM — you may need one Find per stage, or an "is not In Bed / is not Awake"
->    filter), over the night window (see below).
+> **Recommended sleep recipe (updated 2026-07-12 after on-device verification):**
+> 1. `Find All Health Samples where [Sleep Analysis]`, with two **Value is not** filters ("is not
+>    In Bed", "is not Awake" — both confirmed available as free-text filter rows on iOS 26), and
+>    the date filter **End Date · is today** (NOT an hour-precise window — see the correction
+>    below on day granularity).
 > 2. **Repeat with Each** sample → inside the loop use **Get Time Between Dates** (from the sample's
 >    **Start Date** to its **End Date**), unit = **Minutes**, and accumulate a running total (via a
 >    variable or by collecting into a list).
@@ -126,18 +127,37 @@ yesterday evening carry *yesterday's* date). This is a real, reported limitation
 "can't just have it start 24 hours ago" with the day-unit filter.
 [Automators – export sleep data](https://talk.automators.fm/t/shortcut-to-export-sleep-data/18100)
 
-**Reliable recipe — build an explicit datetime window with `is between`.** The **"is between"**
-operator accepts two *date values*, which you can compute to the hour using the **Date** /
-**Adjust Date** actions. Since the automation runs in the *evening* (~21:30) and you want the sleep
-that ended *this morning*:
+> ### ⚠️ CORRECTION (2026-07-12, verified empirically on-device)
+>
+> The recipe below — an hour-precise `is between` window — **does not work**, and this
+> section originally recommended it. Testing on iOS 26 with real Watch data showed the
+> **`is between` operator is day-granular too**: both bound dates are silently floored
+> to their *day*, giving an effective window of `[start-day 00:00, end-day 00:00)`.
+> Evidence: a filter of *between 9 Jul 18:00 and 12 Jul 12:00* returned samples from
+> **9 Jul 00:00:03** onward and returned **nothing from 12 Jul** — and the production
+> shortcut built on an *18:00-yesterday → noon-today* window posted the **previous
+> night's** total (4.5h) instead of last night's (7.0h), because the owner's sleep
+> starts after midnight and the collapsed window `[yesterday 00:00, today 00:00)`
+> excluded all of it.
+>
+> **Working recipe: filter on `End Date · is today` instead.** Every sample of last
+> night's sleep *ended* this morning — including chunks that started before midnight —
+> so day granularity is exactly right for it, with no Adjust Date actions needed at
+> all. (Residual edge: a pre-midnight chunk that also *ends* pre-midnight is missed,
+> and a same-day nap before the evening run is included; both acceptable here.)
+
+**~~Reliable recipe — build an explicit datetime window with `is between`.~~ (RETRACTED —
+see correction above.)** The **"is between"** operator accepts two *date values*, which you can
+compute to the hour using the **Date** / **Adjust Date** actions — but the hour component is
+discarded at query time. Original (broken) recipe kept for the record:
 - **Window start** = yesterday ~18:00 (6 PM) — e.g. `Adjust Date` on "today at 00:00" minus 6 hours,
   or "Current Date" minus ~27 hours.
 - **Window end** = today ~12:00 (noon), safely after any wake-up.
 - Filter: **Start Date · is between · [window start] · [window end]**.
 
-This single 18:00→12:00 window brackets exactly one night regardless of what side of midnight each
-sample falls on, and won't pick up naps from this afternoon. (The Automators community uses the same
-idea in reverse for a 5 PM run — "pull samples from 5 PM yesterday to 5 PM today.")
+(The Automators community described the same idea for a 5 PM run — "pull samples from 5 PM
+yesterday to 5 PM today" — which presumably works there only because full-day granularity happens
+to bracket their nights acceptably.)
 [Automators – export sleep data](https://talk.automators.fm/t/shortcut-to-export-sleep-data/18100)
 
 **Confidence:** corroborated-secondary for the mechanics (stage names, Value/Duration exposure, the
