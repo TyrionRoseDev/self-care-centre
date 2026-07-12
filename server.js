@@ -47,12 +47,14 @@ ensureStore();
 /* ---- check-in store (nightly Steps / Sleep / Feel, keyed by date) ---- */
 function loadCheckins() { try { return JSON.parse(fs.readFileSync(CHECKINS_FILE, "utf8")) || {}; } catch (_) { return {}; } }
 function saveCheckins(all) { fs.writeFileSync(CHECKINS_FILE, JSON.stringify(all, null, 2)); }
-function upsertCheckin(date, entry) {
+function upsertCheckin(date, partial) {
   const all = loadCheckins();
-  all[date] = { ...(all[date] || {}), ...entry, updated: new Date().toISOString() };
+  all[date] = { ...(all[date] || {}), ...partial, updated: new Date().toISOString() };
   saveCheckins(all);
   return all[date];
 }
+const isCheckinDate = (date) => /^\d{4}-\d{2}-\d{2}$/.test(String(date || ""));
+const isStepCount = (n) => Number.isFinite(n) && n >= 0 && n <= 200000;
 
 async function sendToAll(payload) {
   if (!pushReady) return;
@@ -95,16 +97,27 @@ function requireCheckinToken(req, res) {
    Timestamps are self-describing so buckets outside the claimed date are
    dropped rather than trusting the phone's date filters (they've lied before —
    see docs/shortcut-checkin.md). Malformed lines and non-positive counts are
-   skipped. Returns { "HH": steps } hourly totals. */
+   skipped. Returns { "HH": steps } hourly totals.
+
+   "The date" means the owner's wall-clock day in TZ, whatever notation the
+   Shortcut serializes — a 23:00 BST bucket arriving as 22:00Z must land in
+   hour 23 of the same day, not get dropped as yesterday. (Offset-less strings
+   parse as process-local time; the server runs with TZ set, so that's the same
+   clock.) */
+const bucketClock = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23",
+});
 function parseStepDump(text, date) {
   const buckets = {};
   for (const line of String(text || "").split(/\r?\n/)) {
     const [countRaw, iso] = line.split("|").map(s => (s || "").trim());
     const count = Math.round(Number(countRaw));
-    if (!Number.isFinite(count) || count <= 0) continue;
-    const m = /^(\d{4}-\d{2}-\d{2})[T ](\d{2})/.exec(iso || "");
-    if (!m || m[1] !== date) continue;
-    buckets[m[2]] = (buckets[m[2]] || 0) + count;
+    if (!Number.isFinite(count) || count <= 0 || !iso) continue;
+    const t = new Date(iso);
+    if (isNaN(t)) continue;
+    const p = Object.fromEntries(bucketClock.formatToParts(t).map(x => [x.type, x.value]));
+    if (`${p.year}-${p.month}-${p.day}` !== date) continue;
+    buckets[p.hour] = (buckets[p.hour] || 0) + count;
   }
   return buckets;
 }
@@ -127,11 +140,11 @@ function mergeStepBuckets(watch, phone, rule) {
 api.post("/checkin", (req, res) => {
   if (!requireCheckinToken(req, res)) return;
   const { date, steps, sleepHours, feel } = req.body || {};
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+  if (!isCheckinDate(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
   const entry = {};
   if (steps !== undefined && steps !== null && steps !== "") {
     const n = Math.round(Number(steps));
-    if (!Number.isFinite(n) || n < 0 || n > 200000) return res.status(400).json({ error: "steps must be 0–200000" });
+    if (!isStepCount(n)) return res.status(400).json({ error: "steps must be 0–200000" });
     entry.steps = n;
   }
   if (sleepHours !== undefined && sleepHours !== null && sleepHours !== "") {
@@ -148,13 +161,14 @@ api.post("/checkin", (req, res) => {
   res.json({ ok: true, checkin: upsertCheckin(date, entry) });
 });
 /* Which merge rule approximates the Fitness number best is being picked
-   empirically (ADR 0004); flip via env until it settles. Tie-break: never
-   inflate past Fitness. */
-const STEPS_MERGE_RULE = process.env.STEPS_MERGE_RULE === "watch-first" ? "watch-first" : "hourly-max";
+   empirically (ADR 0004); flip via env until it settles. watch-first is the
+   default because it can only ever report less than hourly-max, and the
+   owner's tie-break is "undercount rather than inflate". */
+const STEPS_MERGE_RULE = process.env.STEPS_MERGE_RULE === "hourly-max" ? "hourly-max" : "watch-first";
 api.post("/checkin/steps", (req, res) => {
   if (!requireCheckinToken(req, res)) return;
   const { date, watch, phone } = req.body || {};
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+  if (!isCheckinDate(date)) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
   const watchBuckets = parseStepDump(watch, date);
   const phoneBuckets = parseStepDump(phone, date);
   /* Locked-phone guard: HealthKit returns nothing while the iPhone is locked
@@ -163,12 +177,14 @@ api.post("/checkin/steps", (req, res) => {
   if (!Object.keys(watchBuckets).length && !Object.keys(phoneBuckets).length)
     return res.status(400).json({ error: "both sources empty — phone likely locked, nothing saved" });
   const steps = mergeStepBuckets(watchBuckets, phoneBuckets, STEPS_MERGE_RULE);
-  if (steps > 200000) return res.status(400).json({ error: "steps must be 0–200000" });
+  if (!isStepCount(steps)) return res.status(400).json({ error: "steps must be 0–200000" });
   /* Hourly counts are debug-only and deliberately not persisted (movement
-     patterns don't belong on a public URL) — daily per-source totals go to the
-     ephemeral log so merge rules can be compared against the Fitness figure. */
+     patterns don't belong on a public URL). Daily per-source totals AND both
+     candidate rules' answers go to the ephemeral log — that log, next to the
+     Fitness app's figure, is the dataset that picks the winning rule. */
   const sum = b => Object.values(b).reduce((a, n) => a + n, 0);
-  console.log(`[steps] ${date} watch=${sum(watchBuckets)} phone=${sum(phoneBuckets)} merged=${steps} rule=${STEPS_MERGE_RULE}`);
+  const alt = r => mergeStepBuckets(watchBuckets, phoneBuckets, r);
+  console.log(`[steps] ${date} watch=${sum(watchBuckets)} phone=${sum(phoneBuckets)} watch-first=${alt("watch-first")} hourly-max=${alt("hourly-max")} stored=${steps} rule=${STEPS_MERGE_RULE}`);
   res.json({ ok: true, checkin: upsertCheckin(date, { steps }), rule: STEPS_MERGE_RULE });
 });
 api.get("/checkins", (req, res) => {

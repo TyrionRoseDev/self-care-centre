@@ -43,6 +43,13 @@ Add actions in this order (tap **Add Action** / the search bar and type the name
 
 ### Steps (actions 2–4)
 
+> ⚠️ **Known overcount — superseded by ADR 0004.** This sum-all-samples query counts
+> iPhone and Watch overlap twice (posted 12,000 vs Fitness 11,119 on 2026-07-11).
+> The replacement design POSTs per-source hourly dumps to `/api/checkin/steps` and
+> lets the server merge them (see docs/adr/0004); the tap-by-tap rebuild guide for
+> that Shortcut hasn't been written yet. Until then these actions still work — they
+> just read a little high on days you carry the phone and wear the Watch together.
+
 2. **Find Health Samples** — it renders as "Find All Health Samples where…":
    - *Sample Type* (tap "All Health Samples") → **Steps**
    - **Add Filter** → **Start Date** · **is today**

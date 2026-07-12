@@ -64,6 +64,14 @@ test("parseStepDump keeps only positive counts stamped with the claimed date", (
   assert.deepEqual(parseStepDump(text, DATE), { "09": 750 });
 });
 
+test("parseStepDump buckets by wall-clock time even when Shortcuts emits UTC", () => {
+  // 23:00 BST on the 11th serialized as 22:00Z — same moment, and it must land
+  // in the 11th's hour 23, not get silently dropped as "wrong date".
+  assert.deepEqual(parseStepDump(`400|2026-07-11T22:00:00Z`, DATE), { "23": 400 });
+  // Midnight-adjacent the other way: 23:30Z on the 10th is 00:30 BST on the 11th.
+  assert.deepEqual(parseStepDump(`200|2026-07-10T23:30:00Z`, DATE), { "00": 200 });
+});
+
 test("parseStepDump of nothing is an empty day, not an error", () => {
   assert.deepEqual(parseStepDump("", DATE), {});
   assert.deepEqual(parseStepDump(undefined, DATE), {});
@@ -78,8 +86,10 @@ test("POST /api/checkin/steps stores the merged daily total as a plain check-in"
   assert.equal(status, 200);
   assert.equal(body.ok, true);
   const stored = await getCheckin(DATE);
-  // Merged, not summed (12k-vs-11k overcount is the whole reason this route exists).
-  assert.equal(stored.steps, 500 + 900 + 300);
+  // Merged, not summed (12k-vs-11k overcount is the whole reason this route
+  // exists), and merged with watch-first — the never-inflate default until the
+  // empirical replay picks a winner (ADR 0004).
+  assert.equal(stored.steps, 500 + 700 + 300);
   // Indistinguishable from a manual entry: no per-hour data persisted.
   assert.deepEqual(Object.keys(stored).sort(), ["steps", "updated"]);
 });
