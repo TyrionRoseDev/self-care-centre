@@ -28,4 +28,6 @@ while the iPhone is locked (verified against Apple's docs, July 2026 — see
 docs/research/shortcuts-healthkit-actions.md), so a time-triggered Shortcut can
 silently skip a night; the Shortcut guards against posting empty data and keeps its
 "Notify When Run" banner as the recovery path. Missed nights are acceptable because
-Check-ins are bonus-only.
+Check-ins are bonus-only. The "bridge POSTs, server stores" contract later grew one
+adapter in front of the same store — steps arrive as per-source hourly dumps that the
+server merges (see ADR 0004).

@@ -47,6 +47,12 @@ ensureStore();
 /* ---- check-in store (nightly Steps / Sleep / Feel, keyed by date) ---- */
 function loadCheckins() { try { return JSON.parse(fs.readFileSync(CHECKINS_FILE, "utf8")) || {}; } catch (_) { return {}; } }
 function saveCheckins(all) { fs.writeFileSync(CHECKINS_FILE, JSON.stringify(all, null, 2)); }
+function upsertCheckin(date, entry) {
+  const all = loadCheckins();
+  all[date] = { ...(all[date] || {}), ...entry, updated: new Date().toISOString() };
+  saveCheckins(all);
+  return all[date];
+}
 
 async function sendToAll(payload) {
   if (!pushReady) return;
@@ -81,6 +87,41 @@ function requireCheckinToken(req, res) {
   if (req.get("X-Checkin-Token") !== CHECKIN_TOKEN) { res.status(401).json({ error: "unauthorized" }); return false; }
   return true;
 }
+/* ---- steps adapter (ADR 0004): the Shortcut can't reproduce Health's
+   de-duplicated steps total, so it POSTs dumb per-source hourly dumps and the
+   merge lives here where it's unit-testable and fixable with a git push. ---- */
+
+/* One source's dump: newline-separated `count|bucketStartISO` lines.
+   Timestamps are self-describing so buckets outside the claimed date are
+   dropped rather than trusting the phone's date filters (they've lied before —
+   see docs/shortcut-checkin.md). Malformed lines and non-positive counts are
+   skipped. Returns { "HH": steps } hourly totals. */
+function parseStepDump(text, date) {
+  const buckets = {};
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const [countRaw, iso] = line.split("|").map(s => (s || "").trim());
+    const count = Math.round(Number(countRaw));
+    if (!Number.isFinite(count) || count <= 0) continue;
+    const m = /^(\d{4}-\d{2}-\d{2})[T ](\d{2})/.exec(iso || "");
+    if (!m || m[1] !== date) continue;
+    buckets[m[2]] = (buckets[m[2]] || 0) + count;
+  }
+  return buckets;
+}
+
+/* Merge two sources' hourly buckets into one daily total. Both rules
+   approximate Health's finer-grained per-slice merge; the winner gets picked
+   by replaying real dumps against the Fitness figure (ADR 0004). */
+function mergeStepBuckets(watch, phone, rule) {
+  const hours = new Set([...Object.keys(watch), ...Object.keys(phone)]);
+  let total = 0;
+  for (const h of hours) {
+    if (rule === "watch-first") total += watch[h] !== undefined ? watch[h] : phone[h];
+    else total += Math.max(watch[h] || 0, phone[h] || 0);
+  }
+  return total;
+}
+
 /* Upsert one night. Partial data is a valid Check-in (a bridge may only manage
    steps), so fields merge into whatever the date already holds. */
 api.post("/checkin", (req, res) => {
@@ -104,10 +145,31 @@ api.post("/checkin", (req, res) => {
     entry.feel = n;
   }
   if (!Object.keys(entry).length) return res.status(400).json({ error: "nothing to save — send steps, sleepHours or feel" });
-  const all = loadCheckins();
-  all[date] = { ...(all[date] || {}), ...entry, updated: new Date().toISOString() };
-  saveCheckins(all);
-  res.json({ ok: true, checkin: all[date] });
+  res.json({ ok: true, checkin: upsertCheckin(date, entry) });
+});
+/* Which merge rule approximates the Fitness number best is being picked
+   empirically (ADR 0004); flip via env until it settles. Tie-break: never
+   inflate past Fitness. */
+const STEPS_MERGE_RULE = process.env.STEPS_MERGE_RULE === "watch-first" ? "watch-first" : "hourly-max";
+api.post("/checkin/steps", (req, res) => {
+  if (!requireCheckinToken(req, res)) return;
+  const { date, watch, phone } = req.body || {};
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return res.status(400).json({ error: "date must be YYYY-MM-DD" });
+  const watchBuckets = parseStepDump(watch, date);
+  const phoneBuckets = parseStepDump(phone, date);
+  /* Locked-phone guard: HealthKit returns nothing while the iPhone is locked
+     and the trigger fires many times a day — never wipe a good value with 0.
+     One empty source is a valid day (phone-only days are real). */
+  if (!Object.keys(watchBuckets).length && !Object.keys(phoneBuckets).length)
+    return res.status(400).json({ error: "both sources empty — phone likely locked, nothing saved" });
+  const steps = mergeStepBuckets(watchBuckets, phoneBuckets, STEPS_MERGE_RULE);
+  if (steps > 200000) return res.status(400).json({ error: "steps must be 0–200000" });
+  /* Hourly counts are debug-only and deliberately not persisted (movement
+     patterns don't belong on a public URL) — daily per-source totals go to the
+     ephemeral log so merge rules can be compared against the Fitness figure. */
+  const sum = b => Object.values(b).reduce((a, n) => a + n, 0);
+  console.log(`[steps] ${date} watch=${sum(watchBuckets)} phone=${sum(phoneBuckets)} merged=${steps} rule=${STEPS_MERGE_RULE}`);
+  res.json({ ok: true, checkin: upsertCheckin(date, { steps }), rule: STEPS_MERGE_RULE });
 });
 api.get("/checkins", (req, res) => {
   if (!requireCheckinToken(req, res)) return;
@@ -151,7 +213,7 @@ app.use("/api", api);
 
 /* ---- static app. Keep source/infra files off the web. ---- */
 app.use((req, res, next) => {
-  if (/^\/(node_modules|build|docs|push-service|data|\.git|server\.js|package(-lock)?\.json|Dockerfile|DEPLOY\.md|CONTEXT\.md)(\/|$)/.test(req.path))
+  if (/^\/(node_modules|build|docs|test|push-service|data|\.git|server\.js|package(-lock)?\.json|Dockerfile|DEPLOY\.md|CONTEXT\.md)(\/|$)/.test(req.path))
     return res.status(404).end();
   next();
 });
@@ -183,6 +245,10 @@ if (pushReady) {
   }
 }
 
-app.listen(PORT, () => {
-  console.log(`[self-care-centre] listening on :${PORT}  tz=${TZ}  push=${pushReady ? "on" : "off"}  subscribers=${loadSubs().length}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`[self-care-centre] listening on :${PORT}  tz=${TZ}  push=${pushReady ? "on" : "off"}  subscribers=${loadSubs().length}`);
+  });
+}
+
+module.exports = { app, parseStepDump, mergeStepBuckets };
