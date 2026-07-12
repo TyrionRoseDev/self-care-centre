@@ -5,17 +5,24 @@ that reads **today's steps** and **last night's sleep** from Apple Health and PO
 to `POST /api/checkin` every evening. `feel` stays human: the Watch can't know how the
 day felt in the body, so the app keeps asking only that.
 
-Written against **iOS 26**. Action internals were verified July 2026 — see
-[research/shortcuts-healthkit-actions.md](research/shortcuts-healthkit-actions.md) for
-sources and the reasoning behind every choice below.
+Written against **iOS 26**; shipped and verified against real Watch data 2026-07-12.
+Background research: [research/shortcuts-healthkit-actions.md](research/shortcuts-healthkit-actions.md).
 
 **Design notes baked into this shortcut:**
 - It sends **two separate POSTs** (steps, then sleep), each guarded by "only if the
   number is > 0". The endpoint merges by date, so a partial send is always safe, and a
   failed Health read never overwrites good data with zeros.
-- Sleep is the **asleep stages only (Core + Deep + REM)** over an 18:00-yesterday →
-  noon-today window — that's the same "time asleep" number the Health app shows, and the
-  window catches sleep that starts before midnight without catching afternoon naps.
+- Sleep is the **asleep stages only** (everything that isn't "In Bed" or "Awake" —
+  i.e. Core + Deep + REM) from samples whose **End Date is today** — every sample of
+  last night's sleep *ended* this morning, including any chunk that started before
+  midnight.
+- ⚠️ **Do not "improve" the sleep query with an hour-precise date window.** The Find
+  Health Samples date filters are **day-granular**: an "is between [yesterday 18:00]
+  and [today 12:00]" filter silently collapses to whole days ([start-day 00:00,
+  end-day 00:00)), which drops any post-midnight sleep and returns the *previous*
+  night instead. Found the hard way, verified empirically 2026-07-12 — see the
+  research doc's correction. Anchoring on `End Date is today` sidesteps day
+  granularity entirely.
 - **If the phone is locked when the automation fires, the Health reads fail** — that's an
   Apple privacy guarantee, not a bug. The automation keeps *Notify When Run* on, so a
   locked run shows a banner; tapping it runs the sync unlocked. A missed night is fine:
@@ -39,13 +46,14 @@ Add actions in this order (tap **Add Action** / the search bar and type the name
 2. **Find Health Samples** — it renders as "Find All Health Samples where…":
    - *Sample Type* (tap "All Health Samples") → **Steps**
    - **Add Filter** → **Start Date** · **is today**
-   - *Sort by* → None. Tap **Show More** if needed: turn **Limit** *off*, and set
-     **Group Samples by** → **Day** (big speed-up — collapses hundreds of raw samples).
+   - Delete any auto-added empty "Value is anything" filter row (tap its ⊖).
+   - *Sort by* → None; **Limit** *off*; **Group Samples by** → **Day** (big speed-up),
+     and turn the **Fill Missing** toggle that appears *off*.
    - ⚠️ If the action shows "Filter Health Samples" instead of "Find All…", it grabbed an
      input from a previous action — tap the input variable and clear it.
 3. **Calculate Statistics** — *Operation* → **Sum**, *Input* → the **Health Samples**
    magic variable from action 2. This is today's step total.
-4. **If** — *Input* → the **Statistics** result from action 3 · *Condition* →
+4. **If** — *Input* → the **Sum** from action 3 · *Condition* →
    **is greater than** · `0`. Then, **inside the If** (before "Otherwise"):
    - **Get Contents of URL**:
      - URL: `https://selfcarecentre.tyrion.uk/api/checkin`
@@ -53,49 +61,40 @@ Add actions in this order (tap **Add Action** / the search bar and type the name
      - **Headers** → add one: key `X-Checkin-Token`, value = paste the token
      - **Request Body** → **JSON** → add two fields:
        - `date` · type **Text** · value = the **Formatted Date** variable (action 1)
-       - `steps` · type **Number** · value = the **Statistics** variable (action 3)
-   - You can delete the empty **Otherwise** branch (tap Otherwise → delete) or leave it.
+       - `steps` · type **Number** · value = the **Sum** variable (action 3)
+   - You can delete the empty **Otherwise** branch (tap its ✕) or leave it.
 
-### Last night's sleep window (actions 5–7)
+### Sleep (actions 5–9)
 
-5. **Adjust Date** — *Date* → **Current Date**, operation → **Get Start of Day**.
-   (Result: today at 00:00.)
-6. **Adjust Date** — *Date* → the **Adjusted Date** from action 5, operation →
-   **Subtract** · `6` · **Hours**. (Result: **yesterday 18:00** — the window start.)
-7. **Adjust Date** — *Date* → the **Adjusted Date** from action **5** (careful: pick
-   action 5's output, not action 6's), operation → **Add** · `12` · **Hours**.
-   (Result: **today 12:00** — the window end.)
-
-### Sleep (actions 8–12)
-
-8. **Find Health Samples**:
-   - *Sample Type* → **Sleep Analysis** (listed as just "Sleep" on some versions)
-   - **Add Filter** → **Start Date** · **is between** · [Adjusted Date from action 6] ·
-     [Adjusted Date from action 7]
-   - **Add Filter** → **Value** · **is not** · **In Bed**
-   - **Add Filter** → **Value** · **is not** · **Awake**
+5. **Find Health Samples**:
+   - *Sample Type* → **Sleep** (this is Sleep Analysis; do *not* pick "Sleep Changes")
+   - **Add Filter** → **End Date** · **is today** — end date, not start date: it's the
+     one filter that captures the whole night at day granularity (see design notes)
+   - **Add Filter** → **Value** · **is not** · type `In Bed` (free text, capitals as shown)
+   - **Add Filter** → **Value** · **is not** · type `Awake`
    - **Limit** *off*, no grouping.
-   - *(If the Value operator list has no "is not": remove the two Value filters and use
-     the fallback in Troubleshooting instead.)*
-9. **Repeat with Each** — *Input* → the **Health Samples** from action 8. Inside the loop:
-   - **Get Time Between Dates** — *from* → **Repeat Item** → tap it again and pick its
-     **Start Date** detail; *to* → **Repeat Item → End Date**; *unit* → **Minutes**
-     (minutes, not hours — the action rounds, so summing minutes avoids error).
-   - Nothing else in the loop; the loop's output ("Repeat Results") collects each
-     sample's minutes.
-10. **Calculate Statistics** — **Sum** of **Repeat Results**. This is total sleep minutes.
-11. **Calculate** — [Statistics from action 10] **÷** `60`. This is sleep in hours (the
-    server rounds to 1 decimal place).
-12. **If** — [Statistics from action 10] **is greater than** `0`, inside:
-    - **Get Contents of URL** — same URL, POST, same `X-Checkin-Token` header;
-      **Request Body JSON** fields:
-      - `date` · **Text** · [Formatted Date]
-      - `sleepHours` · **Number** · [Calculation Result from action 11]
+6. **Repeat with Each** — *Input* → the **Health Samples** from action 5. Inside the loop:
+   - **Get Time Between Dates** — careful with the three slots: the slot right after
+     "Get" is the **unit** → **Minutes** (minutes, not hours — the action rounds, so
+     summing minutes limits the error; expect the night's total to come out ~10 min
+     under Health's figure from per-sample rounding). Then *from* → **Repeat Item** →
+     tap the inserted token → pick **Start Date**; *to* → **Repeat Item → End Date**.
+   - Nothing else in the loop; its output ("Repeat Results") collects each sample's
+     minutes.
+7. **Calculate Statistics** — **Sum** of **Repeat Results**. This is total sleep minutes.
+8. **Calculate** — [Sum from action 7] **÷** `60`. This is sleep in hours (the
+   server rounds to 1 decimal place).
+9. **If** — [Sum from action 7, or the Calculation Result — either works]
+   **is greater than** `0`, inside:
+   - **Get Contents of URL** — same URL, POST, same `X-Checkin-Token` header;
+     **Request Body JSON** fields:
+     - `date` · **Text** · [Formatted Date]
+     - `sleepHours` · **Number** · [Calculation Result from action 8]
 
-### A gentle receipt (action 13, optional)
+### A gentle receipt (action 10, optional)
 
-13. **Show Notification** — title `Checked in ✓`, body e.g.
-    `[Statistics (steps)] steps · [Calculation Result]h sleep`. Purely informational —
+10. **Show Notification** — title `Checked in ✓`, body e.g.
+    `[Sum (steps)] steps · [Calculation Result]h sleep`. Purely informational —
     no goals, no colours, in keeping with the app's no-judgement rule.
 
 ## Part 2 — First manual run
@@ -103,16 +102,19 @@ Add actions in this order (tap **Add Action** / the search bar and type the name
 Tap **▶** at the bottom of the editor.
 
 - First run, iOS asks Shortcuts for **Health access** — allow **Steps** and
-  **Sleep Analysis** (toggle both on → Allow).
+  **Sleep** (toggle both on → Allow).
 - First run may also ask to allow connecting to **selfcarecentre.tyrion.uk** — Allow.
 - You should get the "Checked in ✓" notification with plausible numbers. Compare the
-  sleep figure against Health → Browse → Sleep for last night; it should match the
-  "time asleep" number (not "in bed").
+  sleep figure against Health → Browse → Sleep for last night; within ~15 minutes of
+  the "time asleep" number (not "in bed") is a pass — see the rounding note above.
+- Steps can read lower than the Health app right after activity: the Watch trickles
+  steps to the phone with a lag. By evening it converges.
 
-Then confirm the server got it — the app's **Progress tab** strip, or from a computer:
+Then confirm the server got it — the app's **Progress tab** strip, or from a computer
+(token on the clipboard, so it stays out of shell history):
 
 ```
-curl -s "https://selfcarecentre.tyrion.uk/api/checkins?days=2" -H "X-Checkin-Token: <token>"
+curl -s "https://selfcarecentre.tyrion.uk/api/checkins?days=2" -H "X-Checkin-Token: $(pbpaste)"
 ```
 
 ## Part 3 — The nightly automation
@@ -128,14 +130,27 @@ Shortcuts app → **Automation** tab → **+**:
    locked at 21:45 the reads fail, and the banner is the recovery path (tap → it reruns
    unlocked). Manual re-run any time from the shortcut itself also works.
 
+## Debugging with a decoded shortcut
+
+A trick that cracked the day-granularity bug, far better than debugging via screenshots:
+share the shortcut as an iCloud link, then on a Mac fetch
+`https://www.icloud.com/shortcuts/api/records/<id>` — the JSON's
+`fields.shortcut.value.downloadURL` serves the raw plist (`plutil -convert xml1`),
+showing every filter operator and which block each variable actually points to. The
+reverse also works: edit the plist, `shortcuts sign --input … --output …`, and open the
+signed file to import it. ⚠️ The plist contains the `X-Checkin-Token` header, and iCloud
+share links can't be revoked — **rotate the token after sharing one**.
+
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |
 |---|---|
-| Notification shows steps but no sleep (or `0h`) | Sleep filters: check the `is between` window uses action 6 *and* 7's outputs, and the Value filters. Also check the Watch actually tracked last night (Health → Sleep). |
+| Sleep number matches the *previous* night / seems a day behind | A date filter got rebuilt as an hour-precise "is between" window — day granularity clips post-midnight sleep. Use **End Date · is today** (see design notes). |
+| Notification shows steps but no sleep (or `0h`) | Check the End Date filter and both Value filters; confirm the Watch actually tracked last night (Health → Sleep). |
 | Sleep number way too big (≈ whole night in bed) | An "In Bed" filter is missing/wrong — In Bed must be excluded, and never added on top of stages (double-counts). |
-| No "is not" operator on the Value filter | Fallback: drop both Value filters; inside the Repeat loop wrap the Get Time Between Dates in two nested **If**s: If Repeat Item's Value **is not** `In Bed` → If Value **is not** `Awake` → (Get Time Between Dates). If the If action lacks "is not" too, use If **is** `In Bed` with the work in the **Otherwise** branch. |
-| Nothing arrives on the server; shortcut shows a red error on Get Contents of URL | 401 = token typo in the header (key must be exactly `X-Checkin-Token`). 400 = a body field has the wrong type — `steps`/`sleepHours` must be **Number**, `date` **Text** `yyyy-MM-dd`. |
+| Sleep ~10–15 min under Health's figure | Normal: Get Time Between Dates rounds each sample to whole minutes. Harmless for a gentle reference. |
+| No "is not" operator on the Value filter | Fallback: drop both Value filters; inside the Repeat wrap Get Time Between Dates in two nested **If**s (If Value is not `In Bed` → If Value is not `Awake` → measure). |
+| Nothing arrives on the server; red error on Get Contents of URL | 401 = token typo in the header (key must be exactly `X-Checkin-Token`). 400 = a body field has the wrong type — `steps`/`sleepHours` must be **Number**, `date` **Text** `yyyy-MM-dd`. |
 | Automation "ran" at 21:45 but no notification / no data | Phone was locked — HealthKit refuses reads on a locked device (Apple privacy guarantee; no setting overrides it). Tap the automation banner, or run the shortcut manually. The guards mean nothing wrong was written. |
 | Automation doesn't fire at all some nights | A Focus (especially Sleep Focus) can suppress time-of-day automations — check Focus schedules if 21:45 ever falls inside one. |
 | Wrong date on the entry | The `date` field must be the phone's local date via Format Date `yyyy-MM-dd` — don't hand-type a date, and don't use any UTC/ISO variant (app timezone is Europe/London). |
