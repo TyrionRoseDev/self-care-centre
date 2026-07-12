@@ -277,6 +277,8 @@
   .ckrow .f{color:var(--rose);letter-spacing:1px;}
   .ckrow.avg{border-top:1px solid var(--line);border-bottom:none;}
   .ckrow.avg .d,.ckrow.avg .v{color:var(--plum);font-weight:700;}
+  .ckhist .ckrow{grid-template-columns:56px 1fr 1fr 1.2fr;}
+  .ckmore{display:block;margin:10px auto 0;}
 
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
   
@@ -1267,6 +1269,7 @@ function renderToday(){
 
 /* ---------- Tonight's Check-in (Steps · Sleep · Feel) ---------- */
 let ckFeel = null; // pending heart selection, reset each render
+let ckNights = 7;  // Check-in history depth on the Progress tab (7 or 30)
 function heartsHTML(sel){
   let h = "";
   for(let i=1;i<=5;i++) h += `<button type="button" data-feelv="${i}" class="${sel&&i<=sel?"on":""}" aria-label="Feel ${i} of 5">${sel&&i<=sel?"♥":"♡"}</button>`;
@@ -1456,8 +1459,11 @@ function renderProgress(){
       <div class="stat"><div class="n">${st.perfect}</div><div class="k">Perfect days</div></div>
     </div>
 
-    <div class="seclabel">Check-ins · last 7 nights</div>
-    <div class="card" style="margin-top:10px">${checkinStripHTML()}</div>
+    <div class="seclabel">Check-ins · last ${ckNights} nights</div>
+    <div class="card ${ckNights>7?"ckhist":""}" style="margin-top:10px">${checkinStripHTML(ckNights)}
+      ${ckNights>7?`<p class="footnote" style="margin:8px 0 0">Only nights with a Check-in are listed — quiet nights just aren't shown.</p>`:""}
+      <button class="btn ghost ckmore" id="ck-history">${ckNights>7?"Back to 7 nights":"Show the last 30 nights"}</button>
+    </div>
 
     <div class="seclabel">Last 4 weeks</div>
     <div class="gridcal">${cells}</div>
@@ -1467,21 +1473,25 @@ function renderProgress(){
   `;
 }
 
-/* The last-7-nights Check-in strip: steps · sleep · feel per night + averages.
+/* The Check-in strip: steps · sleep · feel per night + averages, 7 or 30 nights.
    Gentle by design — a missing night is just a quiet dash, never a red mark. */
-function checkinStripHTML(){
+function checkinStripHTML(nights = 7){
   const fmtSteps = s => s>=1000 ? (Math.round(s/100)/10)+"k" : String(s);
   let rows = "", stepSum=0, stepN=0, slpSum=0, slpN=0, any=false;
-  for(let i=6;i>=0;i--){
+  for(let i=nights-1;i>=0;i--){
     const d = addDays(startOfDay(now), -i);
     const di = iso(d);
     const c = getCheckin(di) || {};
+    if(nights>7 && c.steps==null && c.sleepHours==null && c.feel==null && i>0) continue;
     if(c.steps!=null||c.sleepHours!=null||c.feel!=null) any=true;
     if(c.steps!=null){ stepSum+=c.steps; stepN++; }
     if(c.sleepHours!=null){ slpSum+=c.sleepHours; slpN++; }
     const hearts = c.feel!=null ? "♥".repeat(c.feel) : "";
+    const label = nights>7
+      ? d.toLocaleDateString(undefined,{day:"numeric",month:"short"})
+      : DAY_KEYS[d.getDay()]+(i===0?" ·":"");
     rows += `<div class="ckrow">
-      <span class="d">${DAY_KEYS[d.getDay()]}${i===0?" ·":""}</span>
+      <span class="d">${label}</span>
       <span class="v ${c.steps!=null?"":"dim"}">${c.steps!=null?fmtSteps(c.steps):"—"}</span>
       <span class="v ${c.sleepHours!=null?"":"dim"}">${c.sleepHours!=null?c.sleepHours+"h":"—"}</span>
       <span class="f">${hearts}</span>
@@ -1638,6 +1648,7 @@ document.body.addEventListener("click", e=>{
   const fv = e.target.closest("[data-feelv]");
   if(fv){ const v=parseInt(fv.dataset.feelv,10); ckFeel = ckFeel===v ? null : v; $("#ck-hearts").innerHTML = heartsHTML(ckFeel); return; }
   if(e.target.id==="ck-save"){ submitCheckin(); return; }
+  if(e.target.id==="ck-history"){ ckNights = ckNights===7 ? 30 : 7; renderProgress(); return; }
   if(e.target.id==="ck-token-save"){
     setCheckinToken($("#ck-token").value);
     renderSettings();
