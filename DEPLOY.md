@@ -47,6 +47,17 @@ curl -X POST https://selfcarecentre.tyrion.uk/api/test -H "X-Admin-Token: <ADMIN
    body `{"date":"YYYY-MM-DD","steps":6240,"sleepHours":7.5,"feel":4}` — any subset of
    the three fields is fine. See docs/adr/0003, and **docs/shortcut-checkin.md** for
    the tap-by-tap Shortcut build guide.
+4. Steps have a dedicated adapter, because summing raw HealthKit samples overcounts
+   (iPhone + Watch overlap): `POST /api/checkin/steps` with the same token header and
+   JSON body `{"date":"YYYY-MM-DD","watch":"<dump>","phone":"<dump>"}`, where each dump
+   is newline-separated `count|bucketStartISO` lines (one per hour, per source). The
+   server merges the two sources and stores only the daily total. The default rule
+   trusts the Watch for any hour it recorded (never-inflate); set
+   `STEPS_MERGE_RULE=hourly-max` to take the larger source per hour instead — the
+   server logs both rules' answers on every POST so they can be compared against
+   the Fitness figure (see docs/adr/0004). If both dumps are empty the POST is
+   rejected and nothing is overwritten — that's the locked-phone guard, not an
+   error to fix.
 
 ## Reminder times
 
