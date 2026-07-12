@@ -72,6 +72,18 @@ test("parseStepDump buckets by wall-clock time even when Shortcuts emits UTC", (
   assert.deepEqual(parseStepDump(`200|2026-07-10T23:30:00Z`, DATE), { "00": 200 });
 });
 
+test("parseStepDump tolerates Shortcuts' locale rendering of counts", () => {
+  // A health sample's Value can arrive as "1,234" or "1,234 count" depending on
+  // how the Shortcut serializes it — dropping those lines would silently
+  // undercount every busy hour.
+  const text = [
+    `1,234|${DATE}T09:00:00+01:00`,
+    `567 count|${DATE}T10:00:00+01:00`,
+    `89.0|${DATE}T11:00:00+01:00`,
+  ].join("\n");
+  assert.deepEqual(parseStepDump(text, DATE), { "09": 1234, "10": 567, "11": 89 });
+});
+
 test("parseStepDump of nothing is an empty day, not an error", () => {
   assert.deepEqual(parseStepDump("", DATE), {});
   assert.deepEqual(parseStepDump(undefined, DATE), {});

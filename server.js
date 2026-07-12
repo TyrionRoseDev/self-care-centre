@@ -111,7 +111,10 @@ function parseStepDump(text, date) {
   const buckets = {};
   for (const line of String(text || "").split(/\r?\n/)) {
     const [countRaw, iso] = line.split("|").map(s => (s || "").trim());
-    const count = Math.round(Number(countRaw));
+    /* Shortcuts renders a sample's Value however the locale feels like it —
+       "1,234", "567 count" — so take the leading number and ignore the rest. */
+    const m = /^([\d.]+)/.exec(countRaw.replace(/,/g, ""));
+    const count = m ? Math.round(Number(m[1])) : NaN;
     if (!Number.isFinite(count) || count <= 0 || !iso) continue;
     const t = new Date(iso);
     if (isNaN(t)) continue;
